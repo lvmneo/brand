@@ -1,0 +1,27 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Layout from './components/Layout'
+import HomePage from './pages/HomePage'
+import BrandsPage from './pages/BrandsPage'
+import BrandPage from './pages/BrandPage'
+import ProductsPage from './pages/ProductsPage'
+import ProductPage from './pages/ProductPage'
+import CartPage from './pages/CartPage'
+import FavoritesPage from './pages/FavoritesPage'
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<HomePage />} />
+          <Route path="brands" element={<BrandsPage />} />
+          <Route path="brands/:slug" element={<BrandPage />} />
+          <Route path="products" element={<ProductsPage />} />
+          <Route path="products/:slug" element={<ProductPage />} />
+          <Route path="cart" element={<CartPage />} />
+          <Route path="favorites" element={<FavoritesPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  )
+}
