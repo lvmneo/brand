@@ -7,6 +7,8 @@ import ProductsPage from './pages/ProductsPage'
 import ProductPage from './pages/ProductPage'
 import CartPage from './pages/CartPage'
 import FavoritesPage from './pages/FavoritesPage'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
 
 export default function App() {
   return (
@@ -20,6 +22,8 @@ export default function App() {
           <Route path="products/:slug" element={<ProductPage />} />
           <Route path="cart" element={<CartPage />} />
           <Route path="favorites" element={<FavoritesPage />} />
+          <Route path="login" element={<LoginPage />} />
+          <Route path="register" element={<RegisterPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, Outlet, useNavigate } from 'react-router-dom'
 import { useCartStore } from '../store/cartStore'
 import { useFavoritesStore } from '../store/favoritesStore'
+import { useAuthStore } from '../store/authStore'
 
 export default function Layout() {
   const navigate = useNavigate()
@@ -11,8 +12,16 @@ export default function Layout() {
   const cartItems = useCartStore((state) => state.items)
   const favoriteItems = useFavoritesStore((state) => state.items)
 
+  const user = useAuthStore((state) => state.user)
+  const logout = useAuthStore((state) => state.logout)
+  const loadFromStorage = useAuthStore((state) => state.loadFromStorage)
+
   const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0)
   const totalFavorites = favoriteItems.length
+
+  useEffect(() => {
+    loadFromStorage()
+  }, [loadFromStorage])
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -25,6 +34,11 @@ export default function Layout() {
     }
 
     navigate(`/products?search=${encodeURIComponent(query)}`)
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
   }
 
   return (
@@ -79,6 +93,39 @@ export default function Layout() {
               Найти
             </button>
           </form>
+
+          <div className="flex items-center gap-3">
+            {user ? (
+              <>
+                <div className="hidden rounded-2xl border px-4 py-2 text-sm lg:block">
+                  {user.name}
+                </div>
+
+                <button
+                  onClick={handleLogout}
+                  className="cursor-pointer rounded-2xl border px-4 py-2 text-sm transition hover:bg-slate-100"
+                >
+                  Выйти
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="rounded-2xl border px-4 py-2 text-sm transition hover:bg-slate-100"
+                >
+                  Войти
+                </Link>
+
+                <Link
+                  to="/register"
+                  className="rounded-2xl bg-black px-4 py-2 text-sm text-white transition hover:opacity-90"
+                >
+                  Регистрация
+                </Link>
+              </>
+            )}
+          </div>
 
           <nav className="flex gap-6 text-sm font-medium lg:hidden">
             <Link to="/brands">Бренды</Link>
