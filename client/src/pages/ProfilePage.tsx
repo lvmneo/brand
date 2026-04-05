@@ -1,73 +1,89 @@
 import { useEffect, useState } from 'react'
-import { getMe, getMyOrders } from '../shared/api'
+import { Link } from 'react-router-dom'
+import { getMe } from '../shared/api'
 
-type Order = {
+type User = {
   id: string
-  status: string
-  totalAmount: number
-  createdAt: string
-  items: any[]
+  name: string
+  email: string
+  createdAt?: string
 }
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<any>(null)
-  const [orders, setOrders] = useState<Order[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    loadData()
+    loadProfile()
   }, [])
 
-  const loadData = async () => {
+  const loadProfile = async () => {
     try {
-      const [userRes, ordersRes] = await Promise.all([
-        getMe(),
-        getMyOrders(),
-      ])
-
-      setUser(userRes.data)
-      setOrders(ordersRes.data)
-    } catch (e) {
-      console.error(e)
+      const res = await getMe()
+      setUser(res.data)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Профиль</h1>
+    <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+      <aside className="h-fit rounded-3xl border bg-white p-5 shadow-sm">
+        <h2 className="mb-5 text-3xl font-bold">Аккаунт</h2>
 
-      {user && (
-        <div style={{ marginBottom: 20 }}>
-          <div><b>Имя:</b> {user.name}</div>
-          <div><b>Email:</b> {user.email}</div>
+        <nav className="flex flex-col gap-3">
+          <Link
+            to="/profile"
+            className="rounded-2xl bg-black px-4 py-3 text-sm font-medium text-white"
+          >
+            Профиль
+          </Link>
+
+          <Link
+            to="/profile/orders"
+            className="rounded-2xl px-4 py-3 text-sm font-medium transition hover:bg-slate-100"
+          >
+            Мои заказы
+          </Link>
+        </nav>
+      </aside>
+
+      <section className="rounded-3xl border bg-white p-7 shadow-sm">
+        <div className="mb-8 flex items-center justify-between">
+          <h1 className="text-5xl font-bold">Профиль</h1>
         </div>
-      )}
 
-      <h2>Мои заказы</h2>
+        {isLoading ? (
+          <div className="text-slate-500">Загрузка профиля...</div>
+        ) : !user ? (
+          <div className="text-slate-500">Не удалось загрузить данные аккаунта</div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-3xl border p-5">
+              <div className="text-sm text-slate-500">Имя</div>
+              <div className="mt-2 text-2xl font-semibold">{user.name}</div>
+            </div>
 
-      {orders.length === 0 && <div>Заказов пока нет</div>}
-
-      {orders.map((order) => (
-        <div
-          key={order.id}
-          style={{
-            border: '1px solid #ccc',
-            marginBottom: 15,
-            padding: 10,
-          }}
-        >
-          <div><b>Заказ:</b> {order.id}</div>
-          <div><b>Статус:</b> {order.status}</div>
-          <div><b>Сумма:</b> {order.totalAmount} ₽</div>
-
-          <div style={{ marginTop: 10 }}>
-            {order.items.map((item: any) => (
-              <div key={item.id}>
-                {item.product.title} × {item.quantity}
+            <div className="rounded-3xl border p-5">
+              <div className="text-sm text-slate-500">Email</div>
+              <div className="mt-2 text-2xl font-semibold break-all">
+                {user.email}
               </div>
-            ))}
+            </div>
+
+            <div className="rounded-3xl border p-5 md:col-span-2">
+              <div className="text-sm text-slate-500">Дата регистрации</div>
+              <div className="mt-2 text-2xl font-semibold">
+                {user.createdAt
+                  ? new Date(user.createdAt).toLocaleDateString('ru-RU')
+                  : '—'}
+              </div>
+            </div>
           </div>
-        </div>
-      ))}
+        )}
+      </section>
     </div>
   )
 }

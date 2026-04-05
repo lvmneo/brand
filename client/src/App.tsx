@@ -10,6 +10,8 @@ import FavoritesPage from './pages/FavoritesPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ProfilePage from './pages/ProfilePage'
+import ProfileOrdersPage from './pages/ProfileOrdersPage'
+import ProfileOrderDetailsPage from './pages/ProfileOrderDetailsPage'
 
 export default function App() {
   return (
@@ -26,6 +28,8 @@ export default function App() {
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="profile/orders" element={<ProfileOrdersPage />} />
+          <Route path="profile/orders/:id" element={<ProfileOrderDetailsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

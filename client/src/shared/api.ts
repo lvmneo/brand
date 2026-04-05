@@ -23,3 +23,4 @@ export const getMe = () => api.get('/auth/me')
 // ===== ORDERS =====
 export const getMyOrders = () => api.get('/orders/my')
 export const createOrder = (data: any) => api.post('/orders', data)
+export const getMyOrderById = (id: string) => api.get(`/orders/my/${id}`)
