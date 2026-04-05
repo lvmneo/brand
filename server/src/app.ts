@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import brandRoutes from './routes/brand.routes'
 import productRoutes from './routes/product.routes'
 import authRoutes from './routes/auth.routes'
+import orderRoutes from './routes/order.routes'
 
 dotenv.config()
 
@@ -28,5 +29,6 @@ app.get('/', (_req, res) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/brands', brandRoutes)
 app.use('/api/products', productRoutes)
+app.use('/api/orders', orderRoutes)
 
 export default app

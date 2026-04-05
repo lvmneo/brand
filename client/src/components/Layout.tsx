@@ -97,9 +97,12 @@ export default function Layout() {
           <div className="flex items-center gap-3">
             {user ? (
               <>
-                <div className="hidden rounded-2xl border px-4 py-2 text-sm lg:block">
+                <Link
+                  to="/profile"
+                  className="hidden rounded-2xl border px-4 py-2 text-sm transition hover:bg-slate-100 lg:block"
+                >
                   {user.name}
-                </div>
+                </Link>
 
                 <button
                   onClick={handleLogout}
@@ -148,6 +151,8 @@ export default function Layout() {
                 </span>
               )}
             </Link>
+
+            {user && <Link to="/profile">Профиль</Link>}
           </nav>
         </div>
       </header>

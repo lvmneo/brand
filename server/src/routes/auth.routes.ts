@@ -2,6 +2,7 @@ import { Router } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { prisma } from '../lib/prisma'
+import { authMiddleware, AuthRequest } from '../middleware/auth'
 
 const router = Router()
 
@@ -90,6 +91,35 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     console.error(error)
     res.status(500).json({ message: 'Ошибка входа' })
+  }
+})
+
+router.get('/me', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user?.userId
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Не авторизован' })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true,
+      },
+    })
+
+    if (!user) {
+      return res.status(404).json({ message: 'Пользователь не найден' })
+    }
+
+    res.json(user)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Ошибка получения профиля' })
   }
 })
 

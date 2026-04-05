@@ -1,16 +1,54 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useCartStore } from '../store/cartStore'
+import { useAuthStore } from '../store/authStore'
+import { createOrder } from '../shared/api'
 
 export default function CartPage() {
+  const navigate = useNavigate()
+
   const items = useCartStore((state) => state.items)
   const removeFromCart = useCartStore((state) => state.removeFromCart)
   const increaseQuantity = useCartStore((state) => state.increaseQuantity)
   const decreaseQuantity = useCartStore((state) => state.decreaseQuantity)
   const clearCart = useCartStore((state) => state.clearCart)
 
+  const token = useAuthStore((state) => state.token)
+
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const totalPrice = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   )
+
+  const handleCheckout = async () => {
+    if (!token) {
+      alert('Сначала войди в аккаунт')
+      navigate('/login')
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+
+      const orderItems = items.map((item) => ({
+        productId: item.id,
+        quantity: item.quantity,
+      }))
+
+      await createOrder({ items: orderItems })
+
+      clearCart()
+      alert('Заказ успешно оформлен')
+      navigate('/profile')
+    } catch (error) {
+      console.error(error)
+      alert('Ошибка оформления заказа')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   if (items.length === 0) {
     return (
@@ -86,8 +124,12 @@ export default function CartPage() {
       <div className="mt-8 rounded-2xl border bg-white p-6 shadow-sm">
         <h2 className="text-2xl font-bold">Итого: {totalPrice} ₽</h2>
 
-        <button className="cursor-pointer mt-4 rounded-xl bg-black px-6 py-3 text-white">
-          Оформить заказ
+        <button
+          onClick={handleCheckout}
+          disabled={isSubmitting}
+          className="mt-4 cursor-pointer rounded-xl bg-black px-6 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isSubmitting ? 'Оформляем...' : 'Оформить заказ'}
         </button>
       </div>
     </div>
