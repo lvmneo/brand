@@ -6,6 +6,10 @@ export const api = axios.create({
   baseURL,
 })
 
+export const getAdminStats = () => api.get('/admin/stats')
+export const getAdminOrders = () => api.get('/admin/orders')
+export const updateOrderStatus = (id: string, status: string) =>
+  api.patch(`/admin/orders/${id}/status`, { status })
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')

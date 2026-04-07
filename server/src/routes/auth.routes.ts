@@ -33,7 +33,12 @@ router.post('/register', async (req, res) => {
     })
 
     const token = jwt.sign(
-      { userId: user.id, email: user.email, name: user.name },
+      {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
       process.env.JWT_SECRET as string,
       { expiresIn: '7d' }
     )
@@ -44,6 +49,7 @@ router.post('/register', async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
     })
   } catch (error) {
@@ -75,7 +81,12 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { userId: user.id, email: user.email, name: user.name },
+      {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
       process.env.JWT_SECRET as string,
       { expiresIn: '7d' }
     )
@@ -86,6 +97,7 @@ router.post('/login', async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
     })
   } catch (error) {
@@ -108,6 +120,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res) => {
         id: true,
         name: true,
         email: true,
+        role: true,
         createdAt: true,
       },
     })

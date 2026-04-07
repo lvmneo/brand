@@ -152,10 +152,16 @@ export default function Layout() {
                        >
                        Мои заказы
                      </Link>
+                     {user?.role === 'ADMIN' && (
+  <Link to="/admin" className="rounded-xl px-3 py-2 text-sm hover:bg-slate-100">
+    Админка
+  </Link>
+)}
                       <button
                         onClick={handleLogout}
                         className="cursor-pointer rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-100"
                       >
+                        
                         Выйти
                       </button>
                     </div>

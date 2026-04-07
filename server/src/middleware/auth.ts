@@ -5,6 +5,7 @@ type JwtUser = {
   userId: string
   email: string
   name: string
+  role: 'USER' | 'ADMIN'
 }
 
 export interface AuthRequest extends Request {

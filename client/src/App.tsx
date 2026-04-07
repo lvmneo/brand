@@ -12,6 +12,7 @@ import RegisterPage from './pages/RegisterPage'
 import ProfilePage from './pages/ProfilePage'
 import ProfileOrdersPage from './pages/ProfileOrdersPage'
 import ProfileOrderDetailsPage from './pages/ProfileOrderDetailsPage'
+import AdminPage from './pages/AdminPage'
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="profile/orders" element={<ProfileOrdersPage />} />
           <Route path="profile/orders/:id" element={<ProfileOrderDetailsPage />} />
+          <Route path="admin" element={<AdminPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
