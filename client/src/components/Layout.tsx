@@ -1,220 +1,168 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useCartStore } from '../store/cartStore'
 import { useFavoritesStore } from '../store/favoritesStore'
-import { useAuthStore } from '../store/authStore'
 
 export default function Layout() {
   const navigate = useNavigate()
-  const location = useLocation()
-
-  const [search, setSearch] = useState('')
-  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
-
-  const accountMenuRef = useRef<HTMLDivElement | null>(null)
-
   const cartItems = useCartStore((state) => state.items)
   const favoriteItems = useFavoritesStore((state) => state.items)
 
-  const user = useAuthStore((state) => state.user)
-  const logout = useAuthStore((state) => state.logout)
-  const loadFromStorage = useAuthStore((state) => state.loadFromStorage)
+  const [search, setSearch] = useState('')
 
-  const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0)
-  const totalFavorites = favoriteItems.length
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
+  const favoritesCount = favoriteItems.length
 
-  useEffect(() => {
-    loadFromStorage()
-  }, [loadFromStorage])
-
-  useEffect(() => {
-    setIsAccountMenuOpen(false)
-  }, [location.pathname])
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        accountMenuRef.current &&
-        !accountMenuRef.current.contains(event.target as Node)
-      ) {
-        setIsAccountMenuOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [])
-
-  const handleSubmit = (e: FormEvent) => {
+  const handleSearch = (e: FormEvent) => {
     e.preventDefault()
 
-    const query = search.trim()
+    const value = search.trim()
 
-    if (!query) {
+    if (!value) {
       navigate('/products')
       return
     }
 
-    navigate(`/products?search=${encodeURIComponent(query)}`)
+    navigate(`/products?search=${encodeURIComponent(value)}`)
   }
 
-  const handleLogout = () => {
-    logout()
-    setIsAccountMenuOpen(false)
-    navigate('/')
-  }
+  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+    [
+      'relative rounded-xl px-3 py-2 text-sm font-semibold transition duration-200',
+      'hover:bg-[#eef5ff] hover:text-[#005bff]',
+      'focus:outline-none focus:ring-4 focus:ring-[#005bff]/10',
+      isActive ? 'bg-[#eef5ff] text-[#005bff]' : 'text-neutral-900',
+    ].join(' ')
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center justify-between gap-6">
-            <Link to="/" className="text-2xl font-bold">
-              BrandMart
-            </Link>
+    <div className="min-h-screen bg-[#f4f7fb] text-neutral-900">
+      <header className="sticky top-0 z-50 border-b border-black/5 bg-white/85 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4">
+          <Link to="/" className="group flex shrink-0 items-center gap-3">
+            <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#005bff] via-[#2f7bff] to-[#ff4db8] shadow-[0_10px_30px_rgba(0,91,255,0.20)] transition duration-200 group-hover:scale-105">
+              <span className="text-lg font-black text-white">B</span>
+              <div className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-[#ff4db8]" />
+            </div>
 
-            <nav className="hidden gap-6 text-sm font-medium lg:flex">
-              <Link to="/brands">Бренды</Link>
-              <Link to="/products">Товары</Link>
+            <div className="hidden leading-none sm:block">
+              <div className="text-[28px] font-black tracking-[-0.04em]">
+                <span className="text-[#005bff]">Brand</span>
+                <span className="bg-gradient-to-r from-[#005bff] via-[#4a86ff] to-[#ff4db8] bg-clip-text text-transparent">
+                  Mart
+                </span>
+              </div>
+              <div className="mt-1 text-[11px] font-medium uppercase tracking-[0.22em] text-neutral-400">
+                official marketplace
+              </div>
+            </div>
+          </Link>
 
-              <Link to="/favorites" className="flex items-center">
+          <nav className="hidden items-center gap-1 lg:flex">
+            <NavLink to="/brands" className={navLinkClass}>
+              Бренды
+            </NavLink>
+
+            <NavLink to="/products" className={navLinkClass}>
+              Товары
+            </NavLink>
+
+            <NavLink to="/favorites" className={navLinkClass}>
+              <span className="flex items-center gap-2">
                 Избранное
-                {totalFavorites > 0 && (
-                  <span className="ml-2 inline-flex min-w-6 items-center justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white">
-                    {totalFavorites}
+                {favoritesCount > 0 && (
+                  <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-black px-2 text-xs font-bold text-white">
+                    {favoritesCount}
                   </span>
                 )}
-              </Link>
+              </span>
+            </NavLink>
 
-              <Link to="/cart" className="flex items-center">
+            <NavLink to="/cart" className={navLinkClass}>
+              <span className="flex items-center gap-2">
                 Корзина
-                {totalCartItems > 0 && (
-                  <span className="ml-2 inline-flex min-w-6 items-center justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white">
-                    {totalCartItems}
+                {cartCount > 0 && (
+                  <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-[#005bff] px-2 text-xs font-bold text-white">
+                    {cartCount}
                   </span>
                 )}
-              </Link>
-            </nav>
-          </div>
+              </span>
+            </NavLink>
+          </nav>
 
           <form
-            onSubmit={handleSubmit}
-            className="flex w-full gap-3 lg:max-w-xl"
+            onSubmit={handleSearch}
+            className="ml-auto flex w-full max-w-[640px] items-center gap-3"
           >
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Поиск товаров или брендов..."
-              className="w-full rounded-2xl border bg-white px-4 py-3 outline-none transition focus:border-black"
-            />
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Поиск товаров или брендов..."
+                className="h-14 w-full rounded-2xl border border-[#d7e3f8] bg-[#f9fbff] px-5 text-base text-neutral-900 outline-none transition duration-200 placeholder:text-neutral-400 focus:border-[#9dc0ff] focus:bg-white focus:ring-4 focus:ring-[#005bff]/10"
+              />
+            </div>
 
             <button
               type="submit"
-              className="cursor-pointer rounded-2xl bg-black px-5 py-3 text-white transition hover:opacity-90"
+              className="inline-flex h-14 items-center justify-center rounded-2xl bg-gradient-to-r from-[#005bff] to-[#ff4db8] px-7 font-semibold text-white shadow-[0_10px_24px_rgba(0,91,255,0.18)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(0,91,255,0.24)] active:translate-y-0 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-[#005bff]/15"
             >
               Найти
             </button>
+
+            <Link
+              to="/profile"
+              className="hidden h-14 items-center justify-center rounded-2xl border border-[#d8e4ff] bg-white px-6 font-semibold text-neutral-900 transition duration-200 hover:-translate-y-0.5 hover:border-[#bfd1ff] hover:bg-[#f8fbff] active:translate-y-0 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-[#005bff]/10 md:inline-flex"
+            >
+              Аккаунт
+            </Link>
           </form>
+        </div>
 
-          <div className="flex items-center gap-3">
-            {user ? (
-              <div className="relative" ref={accountMenuRef}>
-                <button
-                  onClick={() => setIsAccountMenuOpen((prev) => !prev)}
-                  className="cursor-pointer rounded-2xl border px-4 py-2 text-sm transition hover:bg-slate-100"
-                >
-                  Аккаунт
-                </button>
+        <div className="border-t border-black/5 bg-white/70 lg:hidden">
+          <div className="mx-auto flex max-w-7xl items-center gap-2 overflow-x-auto px-4 py-3">
+            <NavLink to="/brands" className={navLinkClass}>
+              Бренды
+            </NavLink>
 
-                {isAccountMenuOpen && (
-                  <div className="absolute right-0 top-14 z-20 min-w-[220px] rounded-2xl border bg-white p-2 shadow-lg">
-                    <div className="border-b px-3 py-2">
-                      <div className="text-sm font-semibold">{user.name}</div>
-                      <div className="text-xs text-slate-500">{user.email}</div>
-                    </div>
+            <NavLink to="/products" className={navLinkClass}>
+              Товары
+            </NavLink>
 
-                    <div className="mt-2 flex flex-col">
-                      <Link
-                        to="/profile"
-                        className="rounded-xl px-3 py-2 text-sm transition hover:bg-slate-100"
-                      >
-                        Профиль
-                      </Link>
-
-                      <Link
-                       to="/profile/orders"
-                       className="rounded-xl px-3 py-2 text-sm transition hover:bg-slate-100"
-                       >
-                       Мои заказы
-                     </Link>
-                     {user?.role === 'ADMIN' && (
-  <Link to="/admin" className="rounded-xl px-3 py-2 text-sm hover:bg-slate-100">
-    Админка
-  </Link>
-)}
-                      <button
-                        onClick={handleLogout}
-                        className="cursor-pointer rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-100"
-                      >
-                        
-                        Выйти
-                      </button>
-                    </div>
-                  </div>
+            <NavLink to="/favorites" className={navLinkClass}>
+              <span className="flex items-center gap-2">
+                Избранное
+                {favoritesCount > 0 && (
+                  <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-black px-2 text-xs font-bold text-white">
+                    {favoritesCount}
+                  </span>
                 )}
-              </div>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="rounded-2xl border px-4 py-2 text-sm transition hover:bg-slate-100"
-                >
-                  Войти
-                </Link>
+              </span>
+            </NavLink>
 
-                <Link
-                  to="/register"
-                  className="rounded-2xl bg-black px-4 py-2 text-sm text-white transition hover:opacity-90"
-                >
-                  Регистрация
-                </Link>
-              </>
-            )}
+            <NavLink to="/cart" className={navLinkClass}>
+              <span className="flex items-center gap-2">
+                Корзина
+                {cartCount > 0 && (
+                  <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-[#005bff] px-2 text-xs font-bold text-white">
+                    {cartCount}
+                  </span>
+                )}
+              </span>
+            </NavLink>
+
+            <Link
+              to="/profile"
+              className="rounded-xl border border-[#d8e4ff] bg-white px-3 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-[#f8fbff]"
+            >
+              Аккаунт
+            </Link>
           </div>
-
-          <nav className="flex gap-6 text-sm font-medium lg:hidden">
-            <Link to="/brands">Бренды</Link>
-            <Link to="/products">Товары</Link>
-
-            <Link to="/favorites" className="flex items-center">
-              Избранное
-              {totalFavorites > 0 && (
-                <span className="ml-2 inline-flex min-w-6 items-center justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white">
-                  {totalFavorites}
-                </span>
-              )}
-            </Link>
-
-            <Link to="/cart" className="flex items-center">
-              Корзина
-              {totalCartItems > 0 && (
-                <span className="ml-2 inline-flex min-w-6 items-center justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white">
-                  {totalCartItems}
-                </span>
-              )}
-            </Link>
-
-            {user && <Link to="/profile">Профиль</Link>}
-          </nav>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8">
+      <main>
         <Outlet />
       </main>
     </div>
