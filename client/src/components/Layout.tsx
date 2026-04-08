@@ -1,15 +1,28 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useCartStore } from '../store/cartStore'
 import { useFavoritesStore } from '../store/favoritesStore'
+import { useAuthStore } from '../store/authStore'
 
 export default function Layout() {
   const navigate = useNavigate()
+
   const cartItems = useCartStore((state) => state.items)
   const favoriteItems = useFavoritesStore((state) => state.items)
 
+  const user = useAuthStore((state) => state.user)
+  const token = useAuthStore((state) => state.token)
+  const logout = useAuthStore((state) => state.logout)
+  const loadFromStorage = useAuthStore((state) => state.loadFromStorage)
+
   const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    loadFromStorage()
+  }, [loadFromStorage])
+
+  const isAuthenticated = Boolean(user && token)
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
   const favoritesCount = favoriteItems.length
@@ -25,6 +38,11 @@ export default function Layout() {
     }
 
     navigate(`/products?search=${encodeURIComponent(value)}`)
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
   }
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -92,31 +110,59 @@ export default function Layout() {
 
           <form
             onSubmit={handleSearch}
-            className="ml-auto flex w-full max-w-[640px] items-center gap-3"
+            className="ml-auto flex w-full max-w-[700px] items-center gap-3"
           >
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Поиск товаров или брендов..."
-                className="h-14 w-full rounded-2xl border border-[#d7e3f8] bg-[#f9fbff] px-5 text-base text-neutral-900 outline-none transition duration-200 placeholder:text-neutral-400 focus:border-[#9dc0ff] focus:bg-white focus:ring-4 focus:ring-[#005bff]/10"
-              />
-            </div>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Поиск товаров или брендов..."
+              className="h-14 w-full rounded-2xl border border-[#d7e3f8] bg-[#f9fbff] px-5 text-base outline-none transition focus:border-[#9dc0ff] focus:bg-white focus:ring-4 focus:ring-[#005bff]/10"
+            />
 
             <button
               type="submit"
-              className="inline-flex h-14 items-center justify-center rounded-2xl bg-gradient-to-r from-[#005bff] to-[#ff4db8] px-7 font-semibold text-white shadow-[0_10px_24px_rgba(0,91,255,0.18)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(0,91,255,0.24)] active:translate-y-0 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-[#005bff]/15"
+              className="inline-flex h-14 items-center justify-center rounded-2xl bg-gradient-to-r from-[#005bff] to-[#ff4db8] px-7 font-semibold text-white shadow-[0_10px_24px_rgba(0,91,255,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(0,91,255,0.24)] active:scale-[0.98]"
             >
               Найти
             </button>
 
-            <Link
-              to="/profile"
-              className="hidden h-14 items-center justify-center rounded-2xl border border-[#d8e4ff] bg-white px-6 font-semibold text-neutral-900 transition duration-200 hover:-translate-y-0.5 hover:border-[#bfd1ff] hover:bg-[#f8fbff] active:translate-y-0 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-[#005bff]/10 md:inline-flex"
-            >
-              Аккаунт
-            </Link>
+            <div className="hidden items-center gap-3 md:flex">
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    to="/profile"
+                    className="inline-flex h-14 items-center justify-center rounded-2xl border border-[#d8e4ff] bg-white px-6 font-semibold transition hover:-translate-y-0.5 hover:bg-[#f8fbff]"
+                  >
+                    Аккаунт
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="inline-flex h-14 items-center justify-center rounded-2xl bg-[#111111] px-6 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-black active:scale-[0.98]"
+                  >
+                    Выйти
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="inline-flex h-14 items-center justify-center rounded-2xl border border-[#d8e4ff] bg-white px-6 font-semibold transition hover:-translate-y-0.5 hover:bg-[#f8fbff]"
+                  >
+                    Войти
+                  </Link>
+
+                  <Link
+                    to="/register"
+                    className="inline-flex h-14 items-center justify-center rounded-2xl bg-[#111111] px-6 font-semibold text-white transition hover:-translate-y-0.5 hover:bg-black active:scale-[0.98]"
+                  >
+                    Регистрация
+                  </Link>
+                </>
+              )}
+            </div>
           </form>
         </div>
 
@@ -131,33 +177,47 @@ export default function Layout() {
             </NavLink>
 
             <NavLink to="/favorites" className={navLinkClass}>
-              <span className="flex items-center gap-2">
-                Избранное
-                {favoritesCount > 0 && (
-                  <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-black px-2 text-xs font-bold text-white">
-                    {favoritesCount}
-                  </span>
-                )}
-              </span>
+              Избранное
             </NavLink>
 
             <NavLink to="/cart" className={navLinkClass}>
-              <span className="flex items-center gap-2">
-                Корзина
-                {cartCount > 0 && (
-                  <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-[#005bff] px-2 text-xs font-bold text-white">
-                    {cartCount}
-                  </span>
-                )}
-              </span>
+              Корзина
             </NavLink>
 
-            <Link
-              to="/profile"
-              className="rounded-xl border border-[#d8e4ff] bg-white px-3 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-[#f8fbff]"
-            >
-              Аккаунт
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/profile"
+                  className="rounded-xl border bg-white px-3 py-2 text-sm font-semibold"
+                >
+                  Аккаунт
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white"
+                >
+                  Выйти
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="rounded-xl border bg-white px-3 py-2 text-sm font-semibold"
+                >
+                  Войти
+                </Link>
+
+                <Link
+                  to="/register"
+                  className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white"
+                >
+                  Регистрация
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>

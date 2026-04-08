@@ -2,8 +2,35 @@ import { Router } from 'express'
 import { prisma } from '../lib/prisma'
 import { authMiddleware } from '../middleware/auth'
 import { adminMiddleware } from '../middleware/admin'
+import multer from 'multer'
+import path from 'path'
+import fs from 'fs'
+
 
 const router = Router()
+
+const uploadsDir = path.join(process.cwd(), 'uploads')
+
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true })
+}
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, uploadsDir)
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname)
+    const baseName = path
+      .basename(file.originalname, ext)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+
+    cb(null, `${Date.now()}-${baseName}${ext}`)
+  },
+})
+
+const upload = multer({ storage })
 
 router.use(authMiddleware, adminMiddleware)
 
@@ -108,31 +135,12 @@ router.get('/products', async (_req, res) => {
   }
 })
 
-router.get('/users', async (_req, res) => {
-  try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
-
-    res.json(users)
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ message: 'Ошибка получения пользователей' })
-  }
-})
 router.get('/brands', async (_req, res) => {
   try {
     const brands = await prisma.brand.findMany({
-      orderBy: { name: 'asc' },
+      orderBy: {
+        name: 'asc',
+      },
     })
 
     res.json(brands)
@@ -145,7 +153,9 @@ router.get('/brands', async (_req, res) => {
 router.get('/categories', async (_req, res) => {
   try {
     const categories = await prisma.category.findMany({
-      orderBy: { name: 'asc' },
+      orderBy: {
+        name: 'asc',
+      },
     })
 
     res.json(categories)
@@ -154,7 +164,20 @@ router.get('/categories', async (_req, res) => {
     res.status(500).json({ message: 'Ошибка получения категорий' })
   }
 })
+router.post('/upload-image', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Файл не загружен' })
+    }
 
+    const imageUrl = `http://localhost:4000/uploads/${req.file.filename}`
+
+    res.json({ imageUrl })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Ошибка загрузки изображения' })
+  }
+})
 router.post('/products', async (req, res) => {
   try {
     const {
@@ -173,11 +196,11 @@ router.post('/products', async (req, res) => {
       return res.status(400).json({ message: 'Заполни обязательные поля' })
     }
 
-    const existing = await prisma.product.findUnique({
+    const existingProduct = await prisma.product.findUnique({
       where: { slug },
     })
 
-    if (existing) {
+    if (existingProduct) {
       return res.status(400).json({ message: 'Товар с таким slug уже существует' })
     }
 
@@ -205,4 +228,27 @@ router.post('/products', async (req, res) => {
     res.status(500).json({ message: 'Ошибка создания товара' })
   }
 })
+
+router.get('/users', async (_req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    res.json(users)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Ошибка получения пользователей' })
+  }
+})
+
 export default router

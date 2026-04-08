@@ -6,6 +6,8 @@ import productRoutes from './routes/product.routes'
 import authRoutes from './routes/auth.routes'
 import orderRoutes from './routes/order.routes'
 import adminRoutes from './routes/admin.routes'
+import path from 'path'
+
 
 dotenv.config()
 
@@ -22,7 +24,7 @@ app.use(cors({
 }))
 
 app.use(express.json())
-
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
 app.get('/', (_req, res) => {
   res.json({ message: 'API is running' })
 })

@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useEffect } from 'react'
+import { useAuthStore } from './store/authStore'
 import Layout from './components/Layout'
 import HomePage from './pages/HomePage'
 import BrandsPage from './pages/BrandsPage'
@@ -14,7 +16,14 @@ import ProfileOrdersPage from './pages/ProfileOrdersPage'
 import ProfileOrderDetailsPage from './pages/ProfileOrderDetailsPage'
 import AdminPage from './pages/AdminPage'
 
+
 export default function App() {
+    const loadFromStorage = useAuthStore((state) => state.loadFromStorage)
+
+  useEffect(() => {
+    loadFromStorage()
+  }, [loadFromStorage])
+
   return (
     <BrowserRouter>
       <Routes>
