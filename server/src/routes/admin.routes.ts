@@ -129,5 +129,80 @@ router.get('/users', async (_req, res) => {
     res.status(500).json({ message: 'Ошибка получения пользователей' })
   }
 })
+router.get('/brands', async (_req, res) => {
+  try {
+    const brands = await prisma.brand.findMany({
+      orderBy: { name: 'asc' },
+    })
 
+    res.json(brands)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Ошибка получения брендов' })
+  }
+})
+
+router.get('/categories', async (_req, res) => {
+  try {
+    const categories = await prisma.category.findMany({
+      orderBy: { name: 'asc' },
+    })
+
+    res.json(categories)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Ошибка получения категорий' })
+  }
+})
+
+router.post('/products', async (req, res) => {
+  try {
+    const {
+      title,
+      slug,
+      description,
+      price,
+      oldPrice,
+      stock,
+      imageUrl,
+      brandId,
+      categoryId,
+    } = req.body
+
+    if (!title || !slug || !description || !price || !brandId || !categoryId) {
+      return res.status(400).json({ message: 'Заполни обязательные поля' })
+    }
+
+    const existing = await prisma.product.findUnique({
+      where: { slug },
+    })
+
+    if (existing) {
+      return res.status(400).json({ message: 'Товар с таким slug уже существует' })
+    }
+
+    const product = await prisma.product.create({
+      data: {
+        title,
+        slug,
+        description,
+        price: Number(price),
+        oldPrice: oldPrice ? Number(oldPrice) : null,
+        stock: stock ? Number(stock) : 0,
+        imageUrl: imageUrl || null,
+        brandId,
+        categoryId,
+      },
+      include: {
+        brand: true,
+        category: true,
+      },
+    })
+
+    res.status(201).json(product)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Ошибка создания товара' })
+  }
+})
 export default router

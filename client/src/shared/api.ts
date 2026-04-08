@@ -5,7 +5,9 @@ const baseURL = 'http://localhost:4000/api'
 export const api = axios.create({
   baseURL,
 })
-
+export const getAdminProducts = () => api.get('/admin/products')
+export const getAdminBrands = () => api.get('/admin/brands')
+export const getAdminCategories = () => api.get('/admin/categories')
 export const getAdminStats = () => api.get('/admin/stats')
 export const getAdminOrders = () => api.get('/admin/orders')
 export const updateOrderStatus = (id: string, status: string) =>
@@ -20,6 +22,17 @@ api.interceptors.request.use((config) => {
 
   return config
 })
+export const createAdminProduct = (data: {
+  title: string
+  slug: string
+  description: string
+  price: number
+  oldPrice?: number | null
+  stock?: number
+  imageUrl?: string
+  brandId: string
+  categoryId: string
+}) => api.post('/admin/products', data)
 
 // ===== AUTH =====
 export const getMe = () => api.get('/auth/me')

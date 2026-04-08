@@ -332,14 +332,6 @@ export default function HomePage() {
         </div>
       </Link>
 
-      <div className="rounded-[24px] border border-[#e6eef9] bg-[#f8fbff] p-5 sm:col-span-2 transition duration-200 hover:-translate-y-0.5 hover:shadow-sm">
-        <div className="text-sm font-semibold text-[#005bff]">
-          Подход в стиле маркетплейса
-        </div>
-        <div className="mt-3 text-2xl font-bold leading-tight text-neutral-900">
-          Меньше декоративности, больше удобных быстрых переходов
-        </div>
-      </div>
     </div>
   </div>
 </section>
