@@ -46,6 +46,24 @@ export const createAdminProduct = (data: {
   categoryId: string
 }) => api.post('/admin/products', data)
 
+export const updateAdminProduct = (
+  id: string,
+  data: {
+    title: string
+    slug: string
+    description: string
+    price: number
+    oldPrice?: number | null
+    stock?: number
+    imageUrl?: string
+    brandId: string
+    categoryId: string
+  }
+) => api.patch(`/admin/products/${id}`, data)
+
+export const deleteAdminProduct = (id: string) =>
+  api.delete(`/admin/products/${id}`)
+
 export const uploadAdminImage = (file: File) => {
   const formData = new FormData()
   formData.append('image', file)

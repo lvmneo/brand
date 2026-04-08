@@ -6,7 +6,6 @@ import multer from 'multer'
 import path from 'path'
 import fs from 'fs'
 
-
 const router = Router()
 
 const uploadsDir = path.join(process.cwd(), 'uploads')
@@ -164,6 +163,7 @@ router.get('/categories', async (_req, res) => {
     res.status(500).json({ message: 'Ошибка получения категорий' })
   }
 })
+
 router.post('/upload-image', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
@@ -178,6 +178,7 @@ router.post('/upload-image', upload.single('image'), async (req, res) => {
     res.status(500).json({ message: 'Ошибка загрузки изображения' })
   }
 })
+
 router.post('/products', async (req, res) => {
   try {
     const {
@@ -192,7 +193,7 @@ router.post('/products', async (req, res) => {
       categoryId,
     } = req.body
 
-    if (!title || !slug || !description || !price || !brandId || !categoryId) {
+    if (!title || !slug || !description || price === undefined || !brandId || !categoryId) {
       return res.status(400).json({ message: 'Заполни обязательные поля' })
     }
 
@@ -226,6 +227,79 @@ router.post('/products', async (req, res) => {
   } catch (error) {
     console.error(error)
     res.status(500).json({ message: 'Ошибка создания товара' })
+  }
+})
+
+router.patch('/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const {
+      title,
+      slug,
+      description,
+      price,
+      oldPrice,
+      stock,
+      imageUrl,
+      brandId,
+      categoryId,
+    } = req.body
+
+    if (!title || !slug || !description || price === undefined || !brandId || !categoryId) {
+      return res.status(400).json({ message: 'Заполни обязательные поля' })
+    }
+
+    const existingProduct = await prisma.product.findFirst({
+      where: {
+        slug,
+        NOT: {
+          id,
+        },
+      },
+    })
+
+    if (existingProduct) {
+      return res.status(400).json({ message: 'Другой товар уже использует такой slug' })
+    }
+
+    const updatedProduct = await prisma.product.update({
+      where: { id },
+      data: {
+        title,
+        slug,
+        description,
+        price: Number(price),
+        oldPrice: oldPrice ? Number(oldPrice) : null,
+        stock: stock ? Number(stock) : 0,
+        imageUrl: imageUrl || null,
+        brandId,
+        categoryId,
+      },
+      include: {
+        brand: true,
+        category: true,
+      },
+    })
+
+    res.json(updatedProduct)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Ошибка обновления товара' })
+  }
+})
+
+router.delete('/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+
+    await prisma.product.delete({
+      where: { id },
+    })
+
+    res.json({ message: 'Товар удален' })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Ошибка удаления товара' })
   }
 })
 

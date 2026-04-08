@@ -7,6 +7,7 @@ export type FavoriteItem = {
   price: number
   imageUrl?: string | null
   slug: string
+  brandName?: string
 }
 
 type FavoritesStore = {

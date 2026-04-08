@@ -3,7 +3,9 @@ import { useFavoritesStore } from '../store/favoritesStore'
 
 export default function FavoritesPage() {
   const items = useFavoritesStore((state) => state.items)
-  const removeFavorite = useFavoritesStore((state) => state.removeFavorite)
+  const removeFromFavorites = useFavoritesStore(
+    (state) => state.removeFromFavorites
+  )
   const clearFavorites = useFavoritesStore((state) => state.clearFavorites)
 
   if (items.length === 0) {
@@ -52,7 +54,7 @@ export default function FavoritesPage() {
             </Link>
 
             <button
-              onClick={() => removeFavorite(item.id)}
+              onClick={() => removeFromFavorites(item.id)}
               className="mt-3 w-full cursor-pointer rounded-xl border py-2 text-sm"
             >
               Убрать из избранного

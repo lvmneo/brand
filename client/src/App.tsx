@@ -14,11 +14,9 @@ import RegisterPage from './pages/RegisterPage'
 import ProfilePage from './pages/ProfilePage'
 import ProfileOrdersPage from './pages/ProfileOrdersPage'
 import ProfileOrderDetailsPage from './pages/ProfileOrderDetailsPage'
-import AdminPage from './pages/AdminPage'
-
 
 export default function App() {
-    const loadFromStorage = useAuthStore((state) => state.loadFromStorage)
+  const loadFromStorage = useAuthStore((state) => state.loadFromStorage)
 
   useEffect(() => {
     loadFromStorage()
@@ -39,8 +37,10 @@ export default function App() {
           <Route path="register" element={<RegisterPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="profile/orders" element={<ProfileOrdersPage />} />
-          <Route path="profile/orders/:id" element={<ProfileOrderDetailsPage />} />
-          <Route path="admin" element={<AdminPage />} />
+          <Route
+            path="profile/orders/:id"
+            element={<ProfileOrderDetailsPage />}
+          />
         </Route>
       </Routes>
     </BrowserRouter>
