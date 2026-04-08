@@ -12,6 +12,8 @@ type User = {
   createdAt?: string
 }
 
+type AdminTab = 'dashboard' | 'products' | 'brands' | 'orders'
+
 export default function ProfilePage() {
   const navigate = useNavigate()
   const authUser = useAuthStore((state) => state.user)
@@ -19,6 +21,7 @@ export default function ProfilePage() {
 
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [activeAdminTab, setActiveAdminTab] = useState<AdminTab>('dashboard')
 
   useEffect(() => {
     if (!authUser || !token) {
@@ -43,6 +46,15 @@ export default function ProfilePage() {
 
   if (!authUser || !token) return null
 
+  const adminMenuButtonClass = (tab: AdminTab) =>
+    [
+      'block w-full rounded-2xl px-4 py-3 text-left text-sm font-semibold transition duration-200',
+      'cursor-pointer',
+      activeAdminTab === tab
+        ? 'bg-[#eef5ff] text-[#005bff]'
+        : 'text-neutral-900 hover:bg-[#f4f8ff]',
+    ].join(' ')
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
@@ -50,26 +62,64 @@ export default function ProfilePage() {
           <h2 className="text-2xl font-bold text-neutral-900">Аккаунт</h2>
 
           <div className="mt-6 space-y-3">
-            <Link
-              to="/profile"
-              className="block rounded-2xl bg-black px-4 py-3 font-semibold text-white"
-            >
-              Профиль
-            </Link>
+  {user?.role === 'ADMIN' ? (
+    <div className="pt-1">
+      <div className="mb-3 px-1 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
+        Админка
+      </div>
 
-            <Link
-              to="/profile/orders"
-              className="block rounded-2xl px-4 py-3 font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
-            >
-              Мои заказы
-            </Link>
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={() => setActiveAdminTab('dashboard')}
+          className={adminMenuButtonClass('dashboard')}
+        >
+          Дашборд
+        </button>
 
-            {user?.role === 'ADMIN' && (
-              <div className="rounded-2xl bg-[#eef5ff] px-4 py-3 text-sm font-semibold text-[#005bff]">
-                Режим администратора
-              </div>
-            )}
-          </div>
+        <button
+          type="button"
+          onClick={() => setActiveAdminTab('products')}
+          className={adminMenuButtonClass('products')}
+        >
+          Товары
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveAdminTab('brands')}
+          className={adminMenuButtonClass('brands')}
+        >
+          Бренды
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveAdminTab('orders')}
+          className={adminMenuButtonClass('orders')}
+        >
+          Заказы
+        </button>
+      </div>
+    </div>
+  ) : (
+    <>
+      <Link
+        to="/profile"
+        className="block rounded-2xl bg-black px-4 py-3 font-semibold text-white"
+      >
+        Профиль
+      </Link>
+
+      <Link
+        to="/profile/orders"
+        className="block rounded-2xl px-4 py-3 font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
+      >
+        Мои заказы
+      </Link>
+    </>
+  )}
+</div>
         </aside>
 
         <section className="space-y-6">
@@ -115,7 +165,7 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {user?.role === 'ADMIN' && <AdminPanel />}
+          {user?.role === 'ADMIN' && <AdminPanel activeTab={activeAdminTab} />}
         </section>
       </div>
     </div>

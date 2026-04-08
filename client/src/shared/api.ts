@@ -16,6 +16,28 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+export const createAdminBrand = (data: {
+  name: string
+  slug: string
+  description?: string
+  logoUrl?: string
+  isVerified?: boolean
+}) => api.post('/admin/brands', data)
+
+export const updateAdminBrand = (
+  id: string,
+  data: {
+    name: string
+    slug: string
+    description?: string
+    logoUrl?: string
+    isVerified?: boolean
+  }
+) => api.patch(`/admin/brands/${id}`, data)
+
+export const deleteAdminBrand = (id: string) =>
+  api.delete(`/admin/brands/${id}`)
+
 // AUTH
 export const getMe = () => api.get('/auth/me')
 

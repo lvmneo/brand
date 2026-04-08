@@ -230,6 +230,8 @@ router.post('/products', async (req, res) => {
   }
 })
 
+
+
 router.patch('/products/:id', async (req, res) => {
   try {
     const { id } = req.params
@@ -322,6 +324,101 @@ router.get('/users', async (_req, res) => {
   } catch (error) {
     console.error(error)
     res.status(500).json({ message: 'Ошибка получения пользователей' })
+  }
+})
+
+router.post('/brands', async (req, res) => {
+  try {
+    const { name, slug, description, logoUrl, isVerified } = req.body
+
+    if (!name || !slug) {
+      return res.status(400).json({ message: 'Название и slug обязательны' })
+    }
+
+    const existingBrand = await prisma.brand.findFirst({
+      where: {
+        OR: [{ name }, { slug }],
+      },
+    })
+
+    if (existingBrand) {
+      return res.status(400).json({ message: 'Бренд с таким названием или slug уже существует' })
+    }
+
+    const brand = await prisma.brand.create({
+      data: {
+        name,
+        slug,
+        description: description || null,
+        logoUrl: logoUrl || null,
+        isVerified: Boolean(isVerified),
+      },
+    })
+
+    res.status(201).json(brand)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Ошибка создания бренда' })
+  }
+})
+
+router.patch('/brands/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const { name, slug, description, logoUrl, isVerified } = req.body
+
+    if (!name || !slug) {
+      return res.status(400).json({ message: 'Название и slug обязательны' })
+    }
+
+    const existingBrand = await prisma.brand.findFirst({
+      where: {
+        NOT: { id },
+        OR: [{ name }, { slug }],
+      },
+    })
+
+    if (existingBrand) {
+      return res.status(400).json({ message: 'Другой бренд уже использует такое название или slug' })
+    }
+
+    const brand = await prisma.brand.update({
+      where: { id },
+      data: {
+        name,
+        slug,
+        description: description || null,
+        logoUrl: logoUrl || null,
+        isVerified: Boolean(isVerified),
+      },
+    })
+
+    res.json(brand)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Ошибка обновления бренда' })
+  }
+})
+
+router.delete('/brands/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+
+    await prisma.brand.delete({
+      where: { id },
+    })
+
+    res.json({ message: 'Бренд удален' })
+  } catch (error: any) {
+    console.error(error)
+
+    if (error?.code === 'P2003') {
+      return res.status(400).json({
+        message: 'Нельзя удалить бренд, пока к нему привязаны товары',
+      })
+    }
+
+    res.status(500).json({ message: 'Ошибка удаления бренда' })
   }
 })
 

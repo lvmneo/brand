@@ -228,6 +228,73 @@ export default function HomePage() {
   </div>
 </section>
 
+<section className="mt-6">
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-bold">Товары</h2>
+              <p className="mt-1 text-sm text-neutral-500">
+                Последние добавленные позиции
+              </p>
+            </div>
+
+            <Link
+              to="/products?sort=newest"
+              className="text-sm font-medium text-[#005bff] hover:underline"
+            >
+              Весь каталог
+            </Link>
+          </div>
+
+          {newestProducts.length === 0 ? (
+            <div className="rounded-[28px] bg-white px-6 py-12 text-center text-neutral-500 shadow-sm">
+              Пока нет товаров для отображения
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+              {newestProducts.map((product) => (
+                <Link
+                  key={product.id}
+                  to={`/products/${product.slug}`}
+                  className="group overflow-hidden rounded-[28px] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                >
+                  <div className="relative aspect-[4/4.4] overflow-hidden bg-[#f4f7fb]">
+                    {product.imageUrl ? (
+                      <img
+                        src={product.imageUrl}
+                        alt={product.title}
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-5xl font-bold text-[#b7c9eb]">
+                        {product.brand.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+
+                    <div className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-medium text-[#005bff] shadow-sm">
+                      {product.category.name}
+                    </div>
+                  </div>
+
+                  <div className="p-4">
+                    <div className="text-sm text-neutral-500">{product.brand.name}</div>
+
+                    <h3 className="mt-2 line-clamp-2 min-h-[48px] text-base font-semibold leading-6">
+                      {product.title}
+                    </h3>
+
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <span className="text-xl font-bold">{product.price} ₽</span>
+                      <span className="text-sm font-medium text-[#005bff]">
+                        Подробнее
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+
         <section className="mt-8">
   <div className="mb-4 flex items-end justify-between gap-3">
     <div>
@@ -336,72 +403,7 @@ export default function HomePage() {
   </div>
 </section>
 
-        <section className="mt-6">
-          <div className="mb-4 flex items-end justify-between gap-3">
-            <div>
-              <h2 className="text-2xl font-bold">Товары</h2>
-              <p className="mt-1 text-sm text-neutral-500">
-                Последние добавленные позиции
-              </p>
-            </div>
-
-            <Link
-              to="/products?sort=newest"
-              className="text-sm font-medium text-[#005bff] hover:underline"
-            >
-              Весь каталог
-            </Link>
-          </div>
-
-          {newestProducts.length === 0 ? (
-            <div className="rounded-[28px] bg-white px-6 py-12 text-center text-neutral-500 shadow-sm">
-              Пока нет товаров для отображения
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-              {newestProducts.map((product) => (
-                <Link
-                  key={product.id}
-                  to={`/products/${product.slug}`}
-                  className="group overflow-hidden rounded-[28px] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-                >
-                  <div className="relative aspect-[4/4.4] overflow-hidden bg-[#f4f7fb]">
-                    {product.imageUrl ? (
-                      <img
-                        src={product.imageUrl}
-                        alt={product.title}
-                        className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-5xl font-bold text-[#b7c9eb]">
-                        {product.brand.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-
-                    <div className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-medium text-[#005bff] shadow-sm">
-                      {product.category.name}
-                    </div>
-                  </div>
-
-                  <div className="p-4">
-                    <div className="text-sm text-neutral-500">{product.brand.name}</div>
-
-                    <h3 className="mt-2 line-clamp-2 min-h-[48px] text-base font-semibold leading-6">
-                      {product.title}
-                    </h3>
-
-                    <div className="mt-4 flex items-center justify-between gap-3">
-                      <span className="text-xl font-bold">{product.price} ₽</span>
-                      <span className="text-sm font-medium text-[#005bff]">
-                        Подробнее
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
+        
       </div>
     </div>
   )
