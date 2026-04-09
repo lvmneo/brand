@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
   getAdminStats,
@@ -149,6 +149,9 @@ export default function AdminPanel({ activeTab }: AdminPanelProps) {
   const [brandIsVerified, setBrandIsVerified] = useState(false)
 
   const [editingBrand, setEditingBrand] = useState<EditBrandForm | null>(null)
+
+  const [productSearch, setProductSearch] = useState('')
+  const [brandSearch, setBrandSearch] = useState('')
 
   useEffect(() => {
     loadAdminData()
@@ -490,6 +493,35 @@ export default function AdminPanel({ activeTab }: AdminPanelProps) {
       setDeletingBrandId(null)
     }
   }
+
+  const filteredProducts = useMemo(() => {
+    const query = productSearch.trim().toLowerCase()
+
+    if (!query) return products
+
+    return products.filter((product) => {
+      return (
+        product.title.toLowerCase().includes(query) ||
+        product.slug.toLowerCase().includes(query) ||
+        product.brand.name.toLowerCase().includes(query) ||
+        product.category.name.toLowerCase().includes(query)
+      )
+    })
+  }, [products, productSearch])
+
+  const filteredBrands = useMemo(() => {
+    const query = brandSearch.trim().toLowerCase()
+
+    if (!query) return brands
+
+    return brands.filter((brand) => {
+      return (
+        brand.name.toLowerCase().includes(query) ||
+        brand.slug.toLowerCase().includes(query) ||
+        (brand.description || '').toLowerCase().includes(query)
+      )
+    })
+  }, [brands, brandSearch])
 
   if (isLoading) {
     return (
@@ -849,67 +881,83 @@ export default function AdminPanel({ activeTab }: AdminPanelProps) {
 
       {activeTab === 'products' && (
         <div className="rounded-[30px] bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
-          <h2 className="mb-6 text-2xl font-bold text-neutral-900">Товары</h2>
+          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <h2 className="text-2xl font-bold text-neutral-900">Товары</h2>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="overflow-hidden rounded-[24px] border border-[#e6eef9] bg-[#fafcff]"
-              >
-                {product.imageUrl ? (
-                  <img
-                    src={product.imageUrl}
-                    alt={product.title}
-                    className="h-56 w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-56 w-full items-center justify-center bg-[#f4f7fb] text-neutral-400">
-                    Нет фото
-                  </div>
-                )}
+            <input
+              type="text"
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              placeholder="Поиск по товарам, брендам, slug..."
+              className="w-full rounded-2xl border border-[#d8e4ff] bg-white px-4 py-3 outline-none transition focus:border-[#9dc0ff] md:max-w-md"
+            />
+          </div>
 
-                <div className="p-4">
-                  <div className="text-sm text-neutral-500">{product.brand.name}</div>
-                  <h3 className="mt-2 text-xl font-bold text-neutral-900">
-                    {product.title}
-                  </h3>
-                  <div className="mt-1 text-sm text-neutral-500">
-                    {product.category.name}
-                  </div>
-                  <div className="mt-3 text-sm text-neutral-500">
-                    slug: {product.slug}
-                  </div>
+          {filteredProducts.length === 0 ? (
+            <div className="rounded-2xl border border-[#e6eef9] bg-[#fafcff] p-8 text-center text-neutral-500">
+              Ничего не найдено по запросу
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {filteredProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="overflow-hidden rounded-[24px] border border-[#e6eef9] bg-[#fafcff]"
+                >
+                  {product.imageUrl ? (
+                    <img
+                      src={product.imageUrl}
+                      alt={product.title}
+                      className="h-56 w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-56 w-full items-center justify-center bg-[#f4f7fb] text-neutral-400">
+                      Нет фото
+                    </div>
+                  )}
 
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="text-xl font-bold">{product.price} ₽</div>
-                    <div className="text-sm text-neutral-500">
-                      Остаток: {product.stock}
+                  <div className="p-4">
+                    <div className="text-sm text-neutral-500">{product.brand.name}</div>
+                    <h3 className="mt-2 text-xl font-bold text-neutral-900">
+                      {product.title}
+                    </h3>
+                    <div className="mt-1 text-sm text-neutral-500">
+                      {product.category.name}
+                    </div>
+                    <div className="mt-3 text-sm text-neutral-400">
+                      slug: {product.slug}
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="text-xl font-bold">{product.price} ₽</div>
+                      <div className="rounded-full bg-[#eef5ff] px-3 py-1 text-sm font-semibold text-[#005bff]">
+                        Остаток: {product.stock}
+                      </div>
+                    </div>
+
+                    <div className="mt-5 flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => startEditProduct(product)}
+                        className="flex-1 cursor-pointer inline-flex items-center justify-center rounded-2xl bg-[#005bff] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(0,91,255,0.18)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#004fe0] hover:shadow-[0_14px_30px_rgba(0,91,255,0.24)] active:scale-[0.98]"
+                      >
+                        Редактировать
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteProduct(product.id)}
+                        disabled={deletingProductId === product.id}
+                        className="flex-1 cursor-pointer inline-flex items-center justify-center rounded-2xl border border-[#ffd4ea] bg-white px-5 py-3 font-semibold text-[#ff4d8d] transition duration-200 hover:-translate-y-0.5 hover:bg-[#fff5fa] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {deletingProductId === product.id ? 'Удаление...' : 'Удалить'}
+                      </button>
                     </div>
                   </div>
-
-                  <div className="mt-5 flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => startEditProduct(product)}
-                      className="flex-1 cursor-pointer inline-flex items-center justify-center rounded-2xl bg-[#005bff] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(0,91,255,0.18)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#004fe0] hover:shadow-[0_14px_30px_rgba(0,91,255,0.24)] active:scale-[0.98]"
-                    >
-                      Редактировать
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteProduct(product.id)}
-                      disabled={deletingProductId === product.id}
-                      className="flex-1 cursor-pointer inline-flex items-center justify-center rounded-2xl border border-[#ffd4ea] bg-white px-5 py-3 font-semibold text-[#ff4d8d] transition duration-200 hover:-translate-y-0.5 hover:bg-[#fff5fa] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {deletingProductId === product.id ? 'Удаление...' : 'Удалить'}
-                    </button>
-                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -1069,64 +1117,80 @@ export default function AdminPanel({ activeTab }: AdminPanelProps) {
 
       {activeTab === 'brands' && (
         <div className="rounded-[30px] bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
-          <h2 className="mb-6 text-2xl font-bold text-neutral-900">Бренды</h2>
+          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <h2 className="text-2xl font-bold text-neutral-900">Бренды</h2>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {brands.map((brand) => (
-              <div
-                key={brand.id}
-                className="rounded-[24px] border border-[#e6eef9] bg-[#fafcff] p-5"
-              >
-                {brand.logoUrl ? (
-                  <img
-                    src={brand.logoUrl}
-                    alt={brand.name}
-                    className="mb-4 h-20 w-20 rounded-2xl object-cover"
-                  />
-                ) : (
-                  <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-[#eef5ff] font-bold text-[#005bff]">
-                    {brand.name.slice(0, 1).toUpperCase()}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-bold text-neutral-900">{brand.name}</h3>
-                  {brand.isVerified && (
-                    <span className="rounded-full bg-[#eef5ff] px-3 py-1 text-xs font-semibold text-[#005bff]">
-                      Verified
-                    </span>
-                  )}
-                </div>
-
-                <div className="mt-2 text-sm text-neutral-400">slug: {brand.slug}</div>
-
-                {brand.description && (
-                  <p className="mt-3 line-clamp-3 text-sm text-neutral-600">
-                    {brand.description}
-                  </p>
-                )}
-
-                <div className="mt-5 flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => startEditBrand(brand)}
-                    className="flex-1 cursor-pointer inline-flex items-center justify-center rounded-2xl bg-[#005bff] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(0,91,255,0.18)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#004fe0] hover:shadow-[0_14px_30px_rgba(0,91,255,0.24)] active:scale-[0.98]"
-                  >
-                    Редактировать
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteBrand(brand.id)}
-                    disabled={deletingBrandId === brand.id}
-                    className="flex-1 cursor-pointer inline-flex items-center justify-center rounded-2xl border border-[#ffd4ea] bg-white px-5 py-3 font-semibold text-[#ff4d8d] transition duration-200 hover:-translate-y-0.5 hover:bg-[#fff5fa] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {deletingBrandId === brand.id ? 'Удаление...' : 'Удалить'}
-                  </button>
-                </div>
-              </div>
-            ))}
+            <input
+              type="text"
+              value={brandSearch}
+              onChange={(e) => setBrandSearch(e.target.value)}
+              placeholder="Поиск по брендам и slug..."
+              className="w-full rounded-2xl border border-[#d8e4ff] bg-white px-4 py-3 outline-none transition focus:border-[#9dc0ff] md:max-w-md"
+            />
           </div>
+
+          {filteredBrands.length === 0 ? (
+            <div className="rounded-2xl border border-[#e6eef9] bg-[#fafcff] p-8 text-center text-neutral-500">
+              Ничего не найдено по запросу
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {filteredBrands.map((brand) => (
+                <div
+                  key={brand.id}
+                  className="rounded-[24px] border border-[#e6eef9] bg-[#fafcff] p-5"
+                >
+                  {brand.logoUrl ? (
+                    <img
+                      src={brand.logoUrl}
+                      alt={brand.name}
+                      className="mb-4 h-20 w-20 rounded-2xl object-cover"
+                    />
+                  ) : (
+                    <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-[#eef5ff] font-bold text-[#005bff]">
+                      {brand.name.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-bold text-neutral-900">{brand.name}</h3>
+                    {brand.isVerified && (
+                      <span className="rounded-full bg-[#eef5ff] px-3 py-1 text-xs font-semibold text-[#005bff]">
+                        Verified
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-2 text-sm text-neutral-400">slug: {brand.slug}</div>
+
+                  {brand.description && (
+                    <p className="mt-3 line-clamp-3 text-sm text-neutral-600">
+                      {brand.description}
+                    </p>
+                  )}
+
+                  <div className="mt-5 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => startEditBrand(brand)}
+                      className="flex-1 cursor-pointer inline-flex items-center justify-center rounded-2xl bg-[#005bff] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(0,91,255,0.18)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#004fe0] hover:shadow-[0_14px_30px_rgba(0,91,255,0.24)] active:scale-[0.98]"
+                    >
+                      Редактировать
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteBrand(brand.id)}
+                      disabled={deletingBrandId === brand.id}
+                      className="flex-1 cursor-pointer inline-flex items-center justify-center rounded-2xl border border-[#ffd4ea] bg-white px-5 py-3 font-semibold text-[#ff4d8d] transition duration-200 hover:-translate-y-0.5 hover:bg-[#fff5fa] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {deletingBrandId === brand.id ? 'Удаление...' : 'Удалить'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
