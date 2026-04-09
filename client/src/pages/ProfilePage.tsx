@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getMe } from '../shared/api'
+import { getMe, getMyReviews } from '../shared/api'
 import { useAuthStore } from '../store/authStore'
 import AdminPanel from '../pages/AdminPanel'
 
@@ -19,9 +19,11 @@ export default function ProfilePage() {
   const authUser = useAuthStore((state) => state.user)
   const token = useAuthStore((state) => state.token)
 
+  
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [activeAdminTab, setActiveAdminTab] = useState<AdminTab>('dashboard')
+  const [reviewsCount, setReviewsCount] = useState(0)
 
   useEffect(() => {
     if (!authUser || !token) {
@@ -33,16 +35,21 @@ export default function ProfilePage() {
   }, [authUser, token, navigate])
 
   const loadProfile = async () => {
-    try {
-      const res = await getMe()
-      setUser(res.data)
-    } catch (error) {
-      console.error(error)
-      navigate('/login')
-    } finally {
-      setIsLoading(false)
-    }
+  try {
+    const [profileRes, reviewsRes] = await Promise.all([
+      getMe(),
+      getMyReviews(),
+    ])
+
+    setUser(profileRes.data)
+    setReviewsCount(reviewsRes.data.length)
+  } catch (error) {
+    console.error(error)
+    navigate('/login')
+  } finally {
+    setIsLoading(false)
   }
+}
 
   if (!authUser || !token) return null
 
@@ -147,8 +154,12 @@ export default function ProfilePage() {
                 <div className="rounded-2xl bg-[#f8fbff] p-5">
                   <div className="text-sm text-neutral-500">Имя</div>
                   <div className="mt-2 text-xl font-semibold">{user.name}</div>
+                  
                 </div>
-
+<div className="rounded-2xl bg-[#f8fbff] p-5">
+  <div className="text-sm text-neutral-500">Оставлено отзывов</div>
+  <div className="mt-2 text-xl font-semibold">{reviewsCount}</div>
+</div>
                 <div className="rounded-2xl bg-[#f8fbff] p-5">
                   <div className="text-sm text-neutral-500">Email</div>
                   <div className="mt-2 text-xl font-semibold">{user.email}</div>
@@ -173,6 +184,8 @@ export default function ProfilePage() {
                 </div>
               </div>
             )}
+
+            
           </div>
 
           {user?.role === 'ADMIN' && <AdminPanel activeTab={activeAdminTab} />}

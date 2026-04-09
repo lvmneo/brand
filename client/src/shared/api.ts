@@ -113,4 +113,19 @@ export const uploadAdminImage = (file: File) => {
       'Content-Type': 'multipart/form-data',
     },
   })
+
+  
 }
+export const getProductReviews = (productId: string) =>
+  api.get(`/reviews/product/${productId}`)
+
+export const canReviewProduct = (productId: string) =>
+  api.get(`/reviews/can-review/${productId}`)
+
+export const createReview = (data: {
+  productId: string
+  rating: number
+  text: string
+}) => api.post('/reviews', data)
+
+export const getMyReviews = () => api.get('/reviews/my')

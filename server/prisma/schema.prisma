@@ -15,9 +15,10 @@ model User {
   role         Role     @default(USER)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
-  orders Order[]
+  orders       Order[]
+  reviews      Review[]
 }
+
 
 model Brand {
   id          String   @id @default(uuid())
@@ -43,23 +44,22 @@ model Category {
 }
 
 model Product {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
-  slug        String   @unique
+  slug        String    @unique
   description String
   price       Float
   oldPrice    Float?
-  stock       Int      @default(0)
+  stock       Int       @default(0)
   imageUrl    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  brandId    String
-  categoryId String
-
-  brand      Brand       @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  category   Category    @relation(fields: [categoryId], references: [id])
-  orderItems OrderItem[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  brandId     String
+  categoryId  String
+  brand       Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  category    Category  @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+  reviews     Review[]
 }
 
 model Order {
@@ -91,6 +91,22 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  productId String
+
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
 }
 
 enum Role {

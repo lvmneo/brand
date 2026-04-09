@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { getMyOrderById } from '../shared/api'
+import {
+  getMyOrderById,
+  canReviewProduct,
+  createReview,
+} from '../shared/api'
 import { useCartStore } from '../store/cartStore'
 
 type OrderItem = {
@@ -23,6 +27,12 @@ type Order = {
   totalAmount: number
   createdAt: string
   items: OrderItem[]
+}
+
+type ReviewState = {
+  canReview: boolean
+  alreadyReviewed: boolean
+  purchased: boolean
 }
 
 const statusMap: Record<string, string> = {
@@ -49,6 +59,15 @@ export default function ProfileOrderDetailsPage() {
   const [order, setOrder] = useState<Order | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  const [reviewPermissions, setReviewPermissions] = useState<
+    Record<string, ReviewState>
+  >({})
+
+  const [openReviewProductId, setOpenReviewProductId] = useState<string | null>(null)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewText, setReviewText] = useState('')
+  const [submittingReview, setSubmittingReview] = useState(false)
+
   useEffect(() => {
     if (!id) return
     loadOrder(id)
@@ -57,11 +76,49 @@ export default function ProfileOrderDetailsPage() {
   const loadOrder = async (orderId: string) => {
     try {
       const res = await getMyOrderById(orderId)
-      setOrder(res.data)
+      const loadedOrder = res.data
+      setOrder(loadedOrder)
+
+      await loadReviewPermissions(loadedOrder.items)
     } catch (error) {
       console.error(error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const loadReviewPermissions = async (items: OrderItem[]) => {
+    try {
+      const results = await Promise.all(
+        items.map(async (item) => {
+          try {
+            const res = await canReviewProduct(item.product.id)
+            return {
+              productId: item.product.id,
+              data: res.data,
+            }
+          } catch (error) {
+            console.error('Ошибка проверки отзыва:', error)
+            return {
+              productId: item.product.id,
+              data: {
+                canReview: false,
+                alreadyReviewed: false,
+                purchased: false,
+              },
+            }
+          }
+        })
+      )
+
+      const mapped = results.reduce<Record<string, ReviewState>>((acc, item) => {
+        acc[item.productId] = item.data
+        return acc
+      }, {})
+
+      setReviewPermissions(mapped)
+    } catch (error) {
+      console.error(error)
     }
   }
 
@@ -70,6 +127,44 @@ export default function ProfileOrderDetailsPage() {
 
     addOrderToCart(order.items)
     navigate('/cart')
+  }
+
+  const handleOpenReview = (productId: string) => {
+    setOpenReviewProductId(productId)
+    setReviewRating(5)
+    setReviewText('')
+  }
+
+  const handleSubmitReview = async (productId: string) => {
+    try {
+      if (!reviewText.trim()) {
+        alert('Напиши текст отзыва')
+        return
+      }
+
+      setSubmittingReview(true)
+
+      await createReview({
+        productId,
+        rating: reviewRating,
+        text: reviewText,
+      })
+
+      alert('Отзыв успешно добавлен')
+
+      setOpenReviewProductId(null)
+      setReviewText('')
+      setReviewRating(5)
+
+      if (order) {
+        await loadReviewPermissions(order.items)
+      }
+    } catch (error: any) {
+      console.error(error)
+      alert(error?.response?.data?.message || 'Ошибка создания отзыва')
+    } finally {
+      setSubmittingReview(false)
+    }
   }
 
   return (
@@ -156,45 +251,131 @@ export default function ProfileOrderDetailsPage() {
             </div>
 
             <div className="space-y-4">
-              {order.items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-4 rounded-2xl border p-4"
-                >
-                  <img
-                    src={item.product.imageUrl || 'https://placehold.co/120x120'}
-                    alt={item.product.title}
-                    className="h-24 w-24 rounded-2xl object-cover"
-                  />
+              {order.items.map((item) => {
+                const reviewInfo = reviewPermissions[item.product.id]
 
-                  <div className="flex-1">
-                    <div className="text-xl font-semibold">
-                      {item.product.title}
+                return (
+                  <div
+                    key={item.id}
+                    className="rounded-2xl border p-4"
+                  >
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={item.product.imageUrl || 'https://placehold.co/120x120'}
+                        alt={item.product.title}
+                        className="h-24 w-24 rounded-2xl object-cover"
+                      />
+
+                      <div className="flex-1">
+                        <div className="text-xl font-semibold">
+                          {item.product.title}
+                        </div>
+
+                        {item.product.description && (
+                          <div className="mt-1 line-clamp-2 text-sm text-slate-500">
+                            {item.product.description}
+                          </div>
+                        )}
+
+                        <div className="mt-2 text-sm text-slate-500">
+                          Количество: {item.quantity}
+                        </div>
+
+                        <div className="mt-1 text-sm text-slate-500">
+                          Цена за штуку: {item.price} ₽
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <div className="text-sm text-slate-500">Итого</div>
+                        <div className="mt-1 text-xl font-bold">
+                          {item.price * item.quantity} ₽
+                        </div>
+                      </div>
                     </div>
 
-                    {item.product.description && (
-                      <div className="mt-1 line-clamp-2 text-sm text-slate-500">
-                        {item.product.description}
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <Link
+                        to={`/products/${item.product.slug}`}
+                        className="rounded-2xl border border-[#d7e3f8] px-4 py-2 text-sm font-medium text-[#005bff] transition hover:bg-[#eef5ff]"
+                      >
+                        Открыть товар
+                      </Link>
+
+                      {reviewInfo?.canReview && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenReview(item.product.id)}
+                          className="rounded-2xl bg-[#005bff] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0047cc]"
+                        >
+                          Оставить отзыв
+                        </button>
+                      )}
+
+                      {reviewInfo?.alreadyReviewed && (
+                        <div className="rounded-2xl bg-green-50 px-4 py-2 text-sm font-medium text-green-700">
+                          Отзыв уже оставлен
+                        </div>
+                      )}
+                    </div>
+
+                    {openReviewProductId === item.product.id && (
+                      <div className="mt-4 rounded-2xl bg-[#f8fbff] p-4">
+                        <h3 className="text-lg font-semibold">Новый отзыв</h3>
+
+                        <div className="mt-4">
+                          <label className="mb-2 block text-sm font-medium">
+                            Оценка
+                          </label>
+                          <select
+                            value={reviewRating}
+                            onChange={(e) => setReviewRating(Number(e.target.value))}
+                            className="w-full rounded-2xl border border-[#d7e3f8] bg-white px-4 py-3 outline-none transition focus:border-[#9dc0ff] focus:ring-4 focus:ring-[#005bff]/10"
+                          >
+                            <option value={5}>5 — Отлично</option>
+                            <option value={4}>4 — Хорошо</option>
+                            <option value={3}>3 — Нормально</option>
+                            <option value={2}>2 — Плохо</option>
+                            <option value={1}>1 — Ужасно</option>
+                          </select>
+                        </div>
+
+                        <div className="mt-4">
+                          <label className="mb-2 block text-sm font-medium">
+                            Текст отзыва
+                          </label>
+                          <textarea
+                            value={reviewText}
+                            onChange={(e) => setReviewText(e.target.value)}
+                            rows={4}
+                            placeholder="Поделись впечатлением о товаре..."
+                            className="w-full rounded-2xl border border-[#d7e3f8] bg-white px-4 py-3 outline-none transition focus:border-[#9dc0ff] focus:ring-4 focus:ring-[#005bff]/10"
+                          />
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-3">
+                          <button
+                            type="button"
+                            disabled={submittingReview}
+                            onClick={() => handleSubmitReview(item.product.id)}
+                            className="rounded-2xl bg-[#005bff] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0047cc] disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {submittingReview ? 'Отправка...' : 'Отправить отзыв'}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setOpenReviewProductId(null)}
+                            className="rounded-2xl border border-[#d7e3f8] px-5 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-white"
+                          >
+                            Отмена
+                          </button>
+                        </div>
                       </div>
                     )}
-
-                    <div className="mt-2 text-sm text-slate-500">
-                      Количество: {item.quantity}
-                    </div>
-
-                    <div className="mt-1 text-sm text-slate-500">
-                      Цена за штуку: {item.price} ₽
-                    </div>
                   </div>
-
-                  <div className="text-right">
-                    <div className="text-sm text-slate-500">Итого</div>
-                    <div className="mt-1 text-xl font-bold">
-                      {item.price * item.quantity} ₽
-                    </div>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </>
         )}

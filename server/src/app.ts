@@ -6,6 +6,7 @@ import productRoutes from './routes/product.routes'
 import authRoutes from './routes/auth.routes'
 import orderRoutes from './routes/order.routes'
 import adminRoutes from './routes/admin.routes'
+import reviewRoutes from './routes/review.routes'
 import path from 'path'
 
 
@@ -34,5 +35,6 @@ app.use('/api/brands', brandRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/orders', orderRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/reviews', reviewRoutes)
 
 export default app
