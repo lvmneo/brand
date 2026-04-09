@@ -14,11 +14,14 @@ import {
   createAdminBrand,
   updateAdminBrand,
   deleteAdminBrand,
+  createAdminCategory,
+  updateAdminCategory,
+  deleteAdminCategory,
 } from '../shared/api'
 
 const statuses = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED']
 
-type AdminTab = 'dashboard' | 'products' | 'brands' | 'orders'
+type AdminTab = 'dashboard' | 'products' | 'brands' | 'categories' | 'orders'
 
 type AdminPanelProps = {
   activeTab: AdminTab
@@ -43,6 +46,7 @@ type Brand = {
 type Category = {
   id: string
   name: string
+  slug: string
 }
 
 type Product = {
@@ -107,6 +111,12 @@ type EditBrandForm = {
   isVerified: boolean
 }
 
+type EditCategoryForm = {
+  id: string
+  name: string
+  slug: string
+}
+
 export default function AdminPanel({ activeTab }: AdminPanelProps) {
   const [stats, setStats] = useState<Stats | null>(null)
   const [orders, setOrders] = useState<AdminOrder[]>([])
@@ -150,8 +160,18 @@ export default function AdminPanel({ activeTab }: AdminPanelProps) {
 
   const [editingBrand, setEditingBrand] = useState<EditBrandForm | null>(null)
 
+  const [creatingCategory, setCreatingCategory] = useState(false)
+  const [updatingCategory, setUpdatingCategory] = useState(false)
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null)
+
+  const [categoryName, setCategoryName] = useState('')
+  const [categorySlug, setCategorySlug] = useState('')
+
+  const [editingCategory, setEditingCategory] = useState<EditCategoryForm | null>(null)
+
   const [productSearch, setProductSearch] = useState('')
   const [brandSearch, setBrandSearch] = useState('')
+  const [categorySearch, setCategorySearch] = useState('')
 
   useEffect(() => {
     loadAdminData()
@@ -494,6 +514,104 @@ export default function AdminPanel({ activeTab }: AdminPanelProps) {
     }
   }
 
+  const handleCreateCategory = async (e: FormEvent) => {
+    e.preventDefault()
+
+    try {
+      setCreatingCategory(true)
+
+      const res = await createAdminCategory({
+        name: categoryName,
+        slug: categorySlug,
+      })
+
+      setCategories((prev) =>
+        [...prev, res.data].sort((a, b) => a.name.localeCompare(b.name))
+      )
+
+      setCategoryName('')
+      setCategorySlug('')
+
+      alert('Категория успешно добавлена')
+    } catch (error) {
+      console.error(error)
+      alert('Ошибка создания категории')
+    } finally {
+      setCreatingCategory(false)
+    }
+  }
+
+  const startEditCategory = (category: Category) => {
+    setEditingCategory({
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+    })
+
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const cancelEditCategory = () => {
+    setEditingCategory(null)
+  }
+
+  const handleUpdateCategory = async (e: FormEvent) => {
+    e.preventDefault()
+
+    if (!editingCategory) return
+
+    try {
+      setUpdatingCategory(true)
+
+      const res = await updateAdminCategory(editingCategory.id, {
+        name: editingCategory.name,
+        slug: editingCategory.slug,
+      })
+
+      setCategories((prev) =>
+        prev
+          .map((category) =>
+            category.id === editingCategory.id ? res.data : category
+          )
+          .sort((a, b) => a.name.localeCompare(b.name))
+      )
+
+      setEditingCategory(null)
+      alert('Категория успешно обновлена')
+    } catch (error) {
+      console.error(error)
+      alert('Ошибка обновления категории')
+    } finally {
+      setUpdatingCategory(false)
+    }
+  }
+
+  const handleDeleteCategory = async (categoryIdToDelete: string) => {
+    const confirmed = window.confirm('Удалить эту категорию?')
+    if (!confirmed) return
+
+    try {
+      setDeletingCategoryId(categoryIdToDelete)
+
+      await deleteAdminCategory(categoryIdToDelete)
+
+      setCategories((prev) =>
+        prev.filter((category) => category.id !== categoryIdToDelete)
+      )
+
+      if (editingCategory?.id === categoryIdToDelete) {
+        setEditingCategory(null)
+      }
+
+      alert('Категория удалена')
+    } catch (error: any) {
+      console.error(error)
+      alert(error?.response?.data?.message || 'Ошибка удаления категории')
+    } finally {
+      setDeletingCategoryId(null)
+    }
+  }
+
   const filteredProducts = useMemo(() => {
     const query = productSearch.trim().toLowerCase()
 
@@ -522,6 +640,19 @@ export default function AdminPanel({ activeTab }: AdminPanelProps) {
       )
     })
   }, [brands, brandSearch])
+
+  const filteredCategories = useMemo(() => {
+    const query = categorySearch.trim().toLowerCase()
+
+    if (!query) return categories
+
+    return categories.filter((category) => {
+      return (
+        category.name.toLowerCase().includes(query) ||
+        category.slug.toLowerCase().includes(query)
+      )
+    })
+  }, [categories, categorySearch])
 
   if (isLoading) {
     return (
@@ -1185,6 +1316,158 @@ export default function AdminPanel({ activeTab }: AdminPanelProps) {
                       className="flex-1 cursor-pointer inline-flex items-center justify-center rounded-2xl border border-[#ffd4ea] bg-white px-5 py-3 font-semibold text-[#ff4d8d] transition duration-200 hover:-translate-y-0.5 hover:bg-[#fff5fa] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {deletingBrandId === brand.id ? 'Удаление...' : 'Удалить'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'categories' && editingCategory && (
+        <div className="rounded-[30px] bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <h2 className="text-2xl font-bold text-neutral-900">
+              Редактирование категории
+            </h2>
+
+            <button
+              type="button"
+              onClick={cancelEditCategory}
+              className="cursor-pointer inline-flex items-center justify-center rounded-2xl border border-[#d8e4ff] bg-white px-5 py-3 font-semibold text-[#005bff] transition duration-200 hover:-translate-y-0.5 hover:bg-[#f4f8ff] active:scale-[0.98]"
+            >
+              Отмена
+            </button>
+          </div>
+
+          <form onSubmit={handleUpdateCategory} className="grid gap-4 md:grid-cols-2">
+            <input
+              type="text"
+              value={editingCategory.name}
+              onChange={(e) =>
+                setEditingCategory((prev) =>
+                  prev ? { ...prev, name: e.target.value } : prev
+                )
+              }
+              placeholder="Название категории"
+              className="rounded-2xl border border-[#d8e4ff] px-4 py-3 outline-none"
+              required
+            />
+
+            <input
+              type="text"
+              value={editingCategory.slug}
+              onChange={(e) =>
+                setEditingCategory((prev) =>
+                  prev ? { ...prev, slug: e.target.value } : prev
+                )
+              }
+              placeholder="slug"
+              className="rounded-2xl border border-[#d8e4ff] px-4 py-3 outline-none"
+              required
+            />
+
+            <button
+              type="submit"
+              disabled={updatingCategory}
+              className="cursor-pointer inline-flex items-center justify-center rounded-2xl bg-[#005bff] px-6 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(0,91,255,0.18)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#004fe0] hover:shadow-[0_14px_30px_rgba(0,91,255,0.24)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {updatingCategory ? 'Сохранение...' : 'Сохранить категорию'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {activeTab === 'categories' && (
+        <div className="rounded-[30px] bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
+          <h2 className="mb-6 text-2xl font-bold text-neutral-900">
+            Добавить категорию
+          </h2>
+
+          <form onSubmit={handleCreateCategory} className="grid gap-4 md:grid-cols-2">
+            <input
+              type="text"
+              value={categoryName}
+              onChange={(e) => setCategoryName(e.target.value)}
+              placeholder="Название категории"
+              className="rounded-2xl border border-[#d8e4ff] px-4 py-3 outline-none"
+              required
+            />
+
+            <input
+              type="text"
+              value={categorySlug}
+              onChange={(e) => setCategorySlug(e.target.value)}
+              placeholder="slug"
+              className="rounded-2xl border border-[#d8e4ff] px-4 py-3 outline-none"
+              required
+            />
+
+            <button
+              type="submit"
+              disabled={creatingCategory}
+              className="cursor-pointer inline-flex items-center justify-center rounded-2xl bg-[#005bff] px-6 py-4 font-semibold text-white shadow-[0_10px_24px_rgba(0,91,255,0.18)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#004fe0] hover:shadow-[0_14px_30px_rgba(0,91,255,0.24)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {creatingCategory ? 'Создание...' : 'Добавить категорию'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {activeTab === 'categories' && (
+        <div className="rounded-[30px] bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
+          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <h2 className="text-2xl font-bold text-neutral-900">Категории</h2>
+
+            <input
+              type="text"
+              value={categorySearch}
+              onChange={(e) => setCategorySearch(e.target.value)}
+              placeholder="Поиск по категориям и slug..."
+              className="w-full rounded-2xl border border-[#d8e4ff] bg-white px-4 py-3 outline-none transition focus:border-[#9dc0ff] md:max-w-md"
+            />
+          </div>
+
+          {filteredCategories.length === 0 ? (
+            <div className="rounded-2xl border border-[#e6eef9] bg-[#fafcff] p-8 text-center text-neutral-500">
+              Ничего не найдено по запросу
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {filteredCategories.map((category) => (
+                <div
+                  key={category.id}
+                  className="rounded-[24px] border border-[#e6eef9] bg-[#fafcff] p-5"
+                >
+                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#eef5ff] font-bold text-[#005bff]">
+                    {category.name.slice(0, 1).toUpperCase()}
+                  </div>
+
+                  <h3 className="text-xl font-bold text-neutral-900">
+                    {category.name}
+                  </h3>
+
+                  <div className="mt-2 text-sm text-neutral-400">
+                    slug: {category.slug}
+                  </div>
+
+                  <div className="mt-5 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => startEditCategory(category)}
+                      className="flex-1 cursor-pointer inline-flex items-center justify-center rounded-2xl bg-[#005bff] px-5 py-3 font-semibold text-white shadow-[0_10px_24px_rgba(0,91,255,0.18)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#004fe0] hover:shadow-[0_14px_30px_rgba(0,91,255,0.24)] active:scale-[0.98]"
+                    >
+                      Редактировать
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCategory(category.id)}
+                      disabled={deletingCategoryId === category.id}
+                      className="flex-1 cursor-pointer inline-flex items-center justify-center rounded-2xl border border-[#ffd4ea] bg-white px-5 py-3 font-semibold text-[#ff4d8d] transition duration-200 hover:-translate-y-0.5 hover:bg-[#fff5fa] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {deletingCategoryId === category.id ? 'Удаление...' : 'Удалить'}
                     </button>
                   </div>
                 </div>

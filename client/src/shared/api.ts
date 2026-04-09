@@ -24,6 +24,23 @@ export const createAdminBrand = (data: {
   isVerified?: boolean
 }) => api.post('/admin/brands', data)
 
+export const createAdminCategory = (data: {
+  name: string
+  slug: string
+}) => api.post('/admin/categories', data)
+
+export const updateAdminCategory = (
+  id: string,
+  data: {
+    name: string
+    slug: string
+  }
+) => api.patch(`/admin/categories/${id}`, data)
+
+export const deleteAdminCategory = (id: string) =>
+  api.delete(`/admin/categories/${id}`)
+
+
 export const updateAdminBrand = (
   id: string,
   data: {

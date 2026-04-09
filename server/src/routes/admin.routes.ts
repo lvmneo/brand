@@ -422,4 +422,97 @@ router.delete('/brands/:id', async (req, res) => {
   }
 })
 
+router.post('/categories', async (req, res) => {
+  try {
+    const { name, slug } = req.body
+
+    if (!name || !slug) {
+      return res.status(400).json({ message: 'Название и slug обязательны' })
+    }
+
+    const existingCategory = await prisma.category.findFirst({
+      where: {
+        OR: [{ name }, { slug }],
+      },
+    })
+
+    if (existingCategory) {
+      return res.status(400).json({
+        message: 'Категория с таким названием или slug уже существует',
+      })
+    }
+
+    const category = await prisma.category.create({
+      data: {
+        name,
+        slug,
+      },
+    })
+
+    res.status(201).json(category)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Ошибка создания категории' })
+  }
+})
+
+router.patch('/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const { name, slug } = req.body
+
+    if (!name || !slug) {
+      return res.status(400).json({ message: 'Название и slug обязательны' })
+    }
+
+    const existingCategory = await prisma.category.findFirst({
+      where: {
+        NOT: { id },
+        OR: [{ name }, { slug }],
+      },
+    })
+
+    if (existingCategory) {
+      return res.status(400).json({
+        message: 'Другая категория уже использует такое название или slug',
+      })
+    }
+
+    const category = await prisma.category.update({
+      where: { id },
+      data: {
+        name,
+        slug,
+      },
+    })
+
+    res.json(category)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Ошибка обновления категории' })
+  }
+})
+
+router.delete('/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+
+    await prisma.category.delete({
+      where: { id },
+    })
+
+    res.json({ message: 'Категория удалена' })
+  } catch (error: any) {
+    console.error(error)
+
+    if (error?.code === 'P2003') {
+      return res.status(400).json({
+        message: 'Нельзя удалить категорию, пока к ней привязаны товары',
+      })
+    }
+
+    res.status(500).json({ message: 'Ошибка удаления категории' })
+  }
+})
+
 export default router
