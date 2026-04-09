@@ -42,12 +42,14 @@ export default function CartPage() {
       clearCart()
       alert('Заказ успешно оформлен')
       navigate('/profile')
-    } catch (error) {
-      console.error(error)
-      alert('Ошибка оформления заказа')
-    } finally {
-      setIsSubmitting(false)
-    }
+    }  catch (error: any) {
+  console.error('Ошибка оформления заказа:', error)
+
+  const message =
+    error?.response?.data?.message || 'Ошибка оформления заказа'
+
+  alert(message)
+}
   }
 
   if (items.length === 0) {

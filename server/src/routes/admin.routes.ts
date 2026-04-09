@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { prisma } from '../lib/prisma'
 import { authMiddleware } from '../middleware/auth'
 import { adminMiddleware } from '../middleware/admin'
+import { AuthRequest } from '../middleware/auth'
 import multer from 'multer'
 import path from 'path'
 import fs from 'fs'
@@ -39,11 +40,16 @@ router.get('/stats', async (_req, res) => {
     const productsCount = await prisma.product.count()
     const ordersCount = await prisma.order.count()
 
-    const revenue = await prisma.order.aggregate({
-      _sum: {
-        totalAmount: true,
-      },
-    })
+   const revenue = await prisma.order.aggregate({
+  where: {
+    status: {
+      in: ['PAID', 'SHIPPED', 'DELIVERED'],
+    },
+  },
+  _sum: {
+    totalAmount: true,
+  },
+})
 
     res.json({
       usersCount,
@@ -170,7 +176,8 @@ router.post('/upload-image', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'Файл не загружен' })
     }
 
-    const imageUrl = `http://localhost:4000/uploads/${req.file.filename}`
+    const serverUrl = process.env.SERVER_URL || 'http://localhost:4000'
+    const imageUrl = `${serverUrl}/uploads/${req.file.filename}`
 
     res.json({ imageUrl })
   } catch (error) {
@@ -512,6 +519,30 @@ router.delete('/categories/:id', async (req, res) => {
     }
 
     res.status(500).json({ message: 'Ошибка удаления категории' })
+  }
+})
+
+router.get('/me', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user?.userId
+
+    if (!userId) {
+      return res.status(401).json({ message: 'Не авторизован' })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+      },
+    })
+
+    res.json(user)
+  } catch (error) {
+    res.status(500).json({ message: 'Ошибка получения пользователя' })
   }
 })
 

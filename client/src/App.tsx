@@ -16,11 +16,16 @@ import ProfileOrdersPage from './pages/ProfileOrdersPage'
 import ProfileOrderDetailsPage from './pages/ProfileOrderDetailsPage'
 
 export default function App() {
-  const loadFromStorage = useAuthStore((state) => state.loadFromStorage)
+const checkAuth = useAuthStore((state) => state.checkAuth)
+const loading = useAuthStore((state) => state.loading)
 
-  useEffect(() => {
-    loadFromStorage()
-  }, [loadFromStorage])
+useEffect(() => {
+  checkAuth()
+}, [checkAuth])
+
+if (loading) {
+  return <div>Загрузка...</div>
+}
 
   return (
     <BrowserRouter>

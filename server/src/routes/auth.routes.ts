@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import { prisma } from '../lib/prisma'
 import { authMiddleware, AuthRequest } from '../middleware/auth'
 
+
 const router = Router()
 
 router.post('/register', async (req, res) => {

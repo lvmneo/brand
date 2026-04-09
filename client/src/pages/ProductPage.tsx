@@ -10,6 +10,7 @@ type Product = {
   slug: string
   description: string
   price: number
+  stock: number
   imageUrl?: string | null
   brand?: {
     name: string
@@ -106,6 +107,16 @@ export default function ProductPage() {
             {product.price} ₽
           </p>
 
+          <p
+  className={`mt-2 text-sm font-medium ${
+    product.stock === 0 ? 'text-red-500' : 'text-emerald-600'
+  }`}
+>
+  {product.stock === 0
+    ? 'Нет в наличии'
+    : `В наличии: ${product.stock} шт.`}
+</p>
+
           <p className="mt-4 text-slate-600">
             {product.description}
           </p>
@@ -118,26 +129,33 @@ export default function ProductPage() {
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              addToCart({
-                id: product.id,
-                title: product.title,
-                price: product.price,
-                imageUrl: product.imageUrl,
-              })
+         <button
+  type="button"
+  disabled={product.stock === 0}
+  onClick={() => {
+    if (product.stock === 0) return
 
-              setShowToast(true)
+    addToCart({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      imageUrl: product.imageUrl,
+    })
 
-              setTimeout(() => {
-                setShowToast(false)
-              }, 2000)
-            }}
-            className="mt-8 w-full cursor-pointer rounded-2xl bg-black py-3 text-white transition hover:opacity-90"
-          >
-            Добавить в корзину
-          </button>
+    setShowToast(true)
+
+    setTimeout(() => {
+      setShowToast(false)
+    }, 2000)
+  }}
+  className={`mt-8 w-full rounded-2xl py-3 text-white transition ${
+    product.stock === 0
+      ? 'cursor-not-allowed bg-neutral-400'
+      : 'cursor-pointer bg-black hover:opacity-90'
+  }`}
+>
+  {product.stock === 0 ? 'Нет в наличии' : 'Добавить в корзину'}
+</button>
         </div>
       </div>
     </div>

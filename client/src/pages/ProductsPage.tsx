@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { api } from '../shared/api'
 import { useFavoritesStore } from '../store/favoritesStore'
+import { useCartStore } from '../store/cartStore'
 
 type Product = {
   id: string
   title: string
   slug: string
   price: number
+  stock: number
   imageUrl?: string | null
   brand: {
     name: string
@@ -27,6 +29,7 @@ export default function ProductsPage() {
 
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite)
   const favoriteItems = useFavoritesStore((state) => state.items)
+  const addToCart = useCartStore((state) => state.addToCart)
 
   const searchFromUrl = searchParams.get('search') || ''
   const categoryFromUrl = searchParams.get('category') || 'all'
@@ -274,6 +277,39 @@ export default function ProductsPage() {
                   <h2 className="mt-2 font-semibold">{product.title}</h2>
 
                   <p className="mt-2 text-lg font-bold">{product.price} ₽</p>
+                  <div className="mt-4">
+                    <p
+  className={`mt-2 text-sm ${
+    product.stock === 0 ? 'text-red-500' : 'text-emerald-600'
+  }`}
+>
+  {product.stock === 0 ? 'Нет в наличии' : `В наличии: ${product.stock}`}
+</p>
+  <button
+    type="button"
+    disabled={product.stock === 0}
+    onClick={(e) => {
+      e.preventDefault()
+      e.stopPropagation()
+
+      if (product.stock === 0) return
+
+      addToCart({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        imageUrl: product.imageUrl,
+      })
+    }}
+    className={`w-full rounded-2xl py-3 text-sm font-semibold text-white transition ${
+      product.stock === 0
+        ? 'cursor-not-allowed bg-neutral-400'
+        : 'cursor-pointer bg-[#005bff] hover:bg-[#0047cc]'
+    }`}
+  >
+    {product.stock === 0 ? 'Нет в наличии' : 'В корзину'}
+  </button>
+</div>
                 </Link>
               </div>
             )

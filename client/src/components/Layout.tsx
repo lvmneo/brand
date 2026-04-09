@@ -40,10 +40,15 @@ export default function Layout() {
     navigate(`/products?search=${encodeURIComponent(value)}`)
   }
 
-  const handleLogout = () => {
-    logout()
-    navigate('/')
-  }
+ const clearCart = useCartStore((state) => state.clearCart)
+const clearFavorites = useFavoritesStore((state) => state.clearFavorites)
+
+const handleLogout = () => {
+  clearCart()
+  clearFavorites()
+  logout()
+  navigate('/')
+}
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     [

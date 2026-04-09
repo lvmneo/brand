@@ -44,7 +44,9 @@ router.get('/my', authMiddleware, async (req: AuthRequest, res) => {
 router.post('/', authMiddleware, async (req: AuthRequest, res) => {
   try {
     const userId = req.user?.userId
-    const { items } = req.body
+    const { items } = req.body as {
+      items?: { productId: string; quantity: number }[]
+    }
 
     if (!userId) {
       return res.status(401).json({ message: 'Не авторизован' })
@@ -54,7 +56,23 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
       return res.status(400).json({ message: 'Корзина пуста' })
     }
 
-    const productIds = items.map((item: { productId: string }) => item.productId)
+    const invalidItem = items.find(
+      (item) =>
+        !item?.productId ||
+        !Number.isInteger(item.quantity) ||
+        item.quantity <= 0
+    )
+
+    if (invalidItem) {
+      return res.status(400).json({ message: 'Некорректное количество товара' })
+    }
+
+    const groupedItems = items.reduce<Record<string, number>>((acc, item) => {
+      acc[item.productId] = (acc[item.productId] || 0) + item.quantity
+      return acc
+    }, {})
+
+    const productIds = Object.keys(groupedItems)
 
     const products = await prisma.product.findMany({
       where: {
@@ -68,50 +86,70 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
       return res.status(400).json({ message: 'Некоторые товары не найдены' })
     }
 
-    const normalizedItems = items.map(
-      (item: { productId: string; quantity: number }) => {
-        const product = products.find((p) => p.id === item.productId)
+    for (const product of products) {
+      const requestedQty = groupedItems[product.id]
 
-        return {
-          productId: item.productId,
-          quantity: item.quantity,
-          price: product!.price,
-        }
+      if (product.stock < requestedQty) {
+        return res.status(400).json({
+          message: `Недостаточно товара "${product.title}" на складе. Осталось: ${product.stock}`,
+        })
       }
-    )
+    }
+
+    const normalizedItems = productIds.map((productId) => {
+      const product = products.find((p) => p.id === productId)!
+
+      return {
+        productId,
+        quantity: groupedItems[productId],
+        price: product.price,
+      }
+    })
 
     const totalAmount = normalizedItems.reduce(
-      (sum: number, item: { quantity: number; price: number }) =>
-        sum + item.price * item.quantity,
+      (sum, item) => sum + item.price * item.quantity,
       0
     )
 
-    const order = await prisma.order.create({
-      data: {
-        userId,
-        totalAmount,
-        items: {
-          create: normalizedItems,
+    const createdOrder = await prisma.$transaction(async (tx) => {
+      for (const item of normalizedItems) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: {
+              decrement: item.quantity,
+            },
+          },
+        })
+      }
+
+      return tx.order.create({
+        data: {
+          userId,
+          totalAmount,
+          items: {
+            create: normalizedItems,
+          },
         },
-      },
-      include: {
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                title: true,
-                slug: true,
-                price: true,
-                imageUrl: true,
+        include: {
+          items: {
+            include: {
+              product: {
+                select: {
+                  id: true,
+                  title: true,
+                  slug: true,
+                  price: true,
+                  imageUrl: true,
+                },
               },
             },
           },
         },
-      },
+      })
     })
 
-    res.status(201).json(order)
+    res.status(201).json(createdOrder)
   } catch (error) {
     console.error(error)
     res.status(500).json({ message: 'Ошибка создания заказа' })
