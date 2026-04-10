@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { getMyReviews } from '../shared/api'
+import { useAuthStore } from '../store/authStore'
 
 type Review = {
   id: string
@@ -29,9 +30,13 @@ export default function ProfileReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
+  const user = useAuthStore((state) => state.user)
+
   useEffect(() => {
-    loadReviews()
-  }, [])
+    if (user?.role === 'USER') {
+      loadReviews()
+    }
+  }, [user])
 
   const loadReviews = async () => {
     try {
@@ -42,6 +47,10 @@ export default function ProfileReviewsPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (user?.role === 'ADMIN') {
+    return <Navigate to="/profile" replace />
   }
 
   return (

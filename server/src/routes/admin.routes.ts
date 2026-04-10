@@ -109,12 +109,48 @@ router.patch('/orders/:id/status', async (req, res) => {
       return res.status(400).json({ message: 'Некорректный статус' })
     }
 
-    const order = await prisma.order.update({
+    const existingOrder = await prisma.order.findUnique({
       where: { id },
-      data: { status },
+      include: {
+        items: true,
+      },
     })
 
-    res.json(order)
+    if (!existingOrder) {
+      return res.status(404).json({ message: 'Заказ не найден' })
+    }
+
+    if (existingOrder.status === 'CANCELLED' && status !== 'CANCELLED') {
+      return res.status(400).json({
+        message: 'Нельзя изменить статус уже отменённого заказа',
+      })
+    }
+
+    if (existingOrder.status === status) {
+      return res.json(existingOrder)
+    }
+
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      if (status === 'CANCELLED' && existingOrder.status !== 'CANCELLED') {
+        for (const item of existingOrder.items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: {
+              stock: {
+                increment: item.quantity,
+              },
+            },
+          })
+        }
+      }
+
+      return tx.order.update({
+        where: { id },
+        data: { status },
+      })
+    })
+
+    res.json(updatedOrder)
   } catch (error) {
     console.error(error)
     res.status(500).json({ message: 'Ошибка обновления статуса заказа' })

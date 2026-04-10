@@ -6,6 +6,7 @@ import {
   createReview,
 } from '../shared/api'
 import { useCartStore } from '../store/cartStore'
+import { useAuthStore } from '../store/authStore'
 
 type OrderItem = {
   id: string
@@ -33,6 +34,7 @@ type ReviewState = {
   canReview: boolean
   alreadyReviewed: boolean
   purchased: boolean
+  delivered: boolean
 }
 
 const statusMap: Record<string, string> = {
@@ -51,10 +53,17 @@ const statusClassMap: Record<string, string> = {
   CANCELLED: 'bg-red-100 text-red-800',
 }
 
+const statusSteps = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED']
+
+function getCurrentStepIndex(status: string) {
+  return statusSteps.indexOf(status)
+}
+
 export default function ProfileOrderDetailsPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const addOrderToCart = useCartStore((state) => state.addOrderToCart)
+  const user = useAuthStore((state) => state.user)
 
   const [order, setOrder] = useState<Order | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -105,6 +114,7 @@ export default function ProfileOrderDetailsPage() {
                 canReview: false,
                 alreadyReviewed: false,
                 purchased: false,
+                delivered: false,
               },
             }
           }
@@ -124,7 +134,6 @@ export default function ProfileOrderDetailsPage() {
 
   const handleRepeatOrder = () => {
     if (!order) return
-
     addOrderToCart(order.items)
     navigate('/cart')
   }
@@ -167,6 +176,9 @@ export default function ProfileOrderDetailsPage() {
     }
   }
 
+  const currentStepIndex = order ? getCurrentStepIndex(order.status) : -1
+  const isCancelled = order?.status === 'CANCELLED'
+
   return (
     <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
       <aside className="h-fit rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/[0.04]">
@@ -187,12 +199,14 @@ export default function ProfileOrderDetailsPage() {
             Мои заказы
           </Link>
 
-          <Link
-            to="/profile/reviews"
-            className="block rounded-2xl px-4 py-3 font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
-          >
-            Мои отзывы
-          </Link>
+          {user?.role === 'USER' && (
+            <Link
+              to="/profile/reviews"
+              className="block rounded-2xl px-4 py-3 font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
+            >
+              Мои отзывы
+            </Link>
+          )}
         </div>
       </aside>
 
@@ -262,6 +276,57 @@ export default function ProfileOrderDetailsPage() {
                 </div>
               </div>
 
+              <div className="mt-8 rounded-3xl bg-[#f8fbff] p-5">
+                <div className="mb-4 text-lg font-semibold text-neutral-900">
+                  Статус заказа
+                </div>
+
+                {isCancelled ? (
+                  <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                    Заказ отменён
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-4">
+                    {statusSteps.map((step, index) => {
+                      const isActive = currentStepIndex >= index
+                      const isCurrent = order.status === step
+
+                      return (
+                        <div key={step}>
+                          <div
+                            className={`rounded-2xl border px-4 py-4 text-center transition ${
+                              isActive
+                                ? 'border-[#005bff] bg-white text-[#005bff]'
+                                : 'border-[#d7e3f8] bg-white text-slate-400'
+                            }`}
+                          >
+                            <div
+                              className={`mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                                isActive
+                                  ? 'bg-[#005bff] text-white'
+                                  : 'bg-slate-100 text-slate-400'
+                              }`}
+                            >
+                              {index + 1}
+                            </div>
+
+                            <div className="text-sm font-semibold">
+                              {statusMap[step]}
+                            </div>
+
+                            {isCurrent && (
+                              <div className="mt-2 text-xs font-medium text-[#005bff]">
+                                Текущий этап
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
               <div className="mt-8 space-y-4">
                 {order.items.map((item) => {
                   const reviewInfo = reviewPermissions[item.product.id]
@@ -321,6 +386,14 @@ export default function ProfileOrderDetailsPage() {
                               </div>
                             )}
                           </div>
+
+                          {reviewInfo?.purchased &&
+                            !reviewInfo?.delivered &&
+                            !reviewInfo?.alreadyReviewed && (
+                              <div className="mt-3 rounded-2xl bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
+                                Отзыв можно оставить только после доставки товара
+                              </div>
+                            )}
                         </div>
 
                         <div className="text-right">

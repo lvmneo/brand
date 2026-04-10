@@ -61,7 +61,7 @@ router.get('/can-review/:productId', authMiddleware, async (req: AuthRequest, re
       return res.status(401).json({ message: 'Не авторизован' })
     }
 
-     if (!productId) {
+    if (!productId) {
       return res.status(400).json({ message: 'productId не передан' })
     }
 
@@ -74,6 +74,16 @@ router.get('/can-review/:productId', authMiddleware, async (req: AuthRequest, re
       },
     })
 
+    const delivered = await prisma.orderItem.findFirst({
+      where: {
+        productId,
+        order: {
+          userId,
+          status: 'DELIVERED',
+        },
+      },
+    })
+
     const existingReview = await prisma.review.findFirst({
       where: {
         userId,
@@ -81,17 +91,17 @@ router.get('/can-review/:productId', authMiddleware, async (req: AuthRequest, re
       },
     })
 
-    res.json({
-      canReview: Boolean(purchased) && !existingReview,
+    return res.json({
+      canReview: Boolean(delivered) && !existingReview,
       alreadyReviewed: Boolean(existingReview),
       purchased: Boolean(purchased),
+      delivered: Boolean(delivered),
     })
   } catch (error) {
     console.error(error)
-    res.status(500).json({ message: 'Ошибка проверки отзыва' })
+    return res.status(500).json({ message: 'Ошибка проверки возможности отзыва' })
   }
 })
-
 router.get('/my', authMiddleware, async (req: AuthRequest, res) => {
   try {
     const userId = req.user?.userId
@@ -129,35 +139,38 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
   try {
     const userId = req.user?.userId
     const { productId, rating, text } = req.body as {
-  productId?: string
-  rating?: number
-  text?: string
-}
+      productId?: string
+      rating?: number
+      text?: string
+    }
 
     if (!userId) {
       return res.status(401).json({ message: 'Не авторизован' })
     }
 
-    if (!productId || !rating || !text?.trim()) {
+    if (!productId || !rating || !text || !String(text).trim()) {
       return res.status(400).json({ message: 'Заполни все поля отзыва' })
     }
 
-    if (rating < 1 || rating > 5) {
+    const normalizedRating = Number(rating)
+
+    if (normalizedRating < 1 || normalizedRating > 5) {
       return res.status(400).json({ message: 'Оценка должна быть от 1 до 5' })
     }
 
-    const purchased = await prisma.orderItem.findFirst({
+    const delivered = await prisma.orderItem.findFirst({
       where: {
         productId,
         order: {
           userId,
+          status: 'DELIVERED',
         },
       },
     })
 
-    if (!purchased) {
+    if (!delivered) {
       return res.status(403).json({
-        message: 'Оставить отзыв может только пользователь, купивший товар',
+        message: 'Оставить отзыв можно только после доставки товара',
       })
     }
 
@@ -176,8 +189,8 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
       data: {
         productId,
         userId,
-        rating: Number(rating),
-        text: text.trim(),
+        rating: normalizedRating,
+        text: String(text).trim(),
       },
       include: {
         user: {
@@ -189,11 +202,10 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
       },
     })
 
-    res.status(201).json(review)
+    return res.status(201).json(review)
   } catch (error) {
     console.error(error)
-    res.status(500).json({ message: 'Ошибка создания отзыва' })
+    return res.status(500).json({ message: 'Ошибка создания отзыва' })
   }
 })
-
 export default router

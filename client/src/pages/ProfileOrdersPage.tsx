@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getMyOrders } from '../shared/api'
+import { useAuthStore } from '../store/authStore'
 
 type OrderItem = {
   id: string
@@ -40,6 +41,7 @@ const statusClassMap: Record<string, string> = {
 export default function ProfileOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const user = useAuthStore((state) => state.user)
 
   useEffect(() => {
     loadOrders()
@@ -76,12 +78,14 @@ export default function ProfileOrdersPage() {
             Мои заказы
           </Link>
 
-          <Link
-            to="/profile/reviews"
-            className="block rounded-2xl px-4 py-3 font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
-          >
-            Мои отзывы
-          </Link>
+          {user?.role === 'USER' && (
+            <Link
+              to="/profile/reviews"
+              className="block rounded-2xl px-4 py-3 font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
+            >
+              Мои отзывы
+            </Link>
+          )}
         </div>
       </aside>
 

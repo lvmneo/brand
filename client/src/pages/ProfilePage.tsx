@@ -137,12 +137,7 @@ export default function ProfilePage() {
               </>
                 
             )}
-            <Link
-  to="/profile/reviews"
-  className="block rounded-2xl px-4 py-3 font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
->
-  Мои отзывы
-</Link>
+     
           </div>
         </aside>
 

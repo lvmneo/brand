@@ -61,9 +61,10 @@ export default function ProductPage() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [averageRating, setAverageRating] = useState(0)
   const [reviewsCount, setReviewsCount] = useState(0)
-  const [canReview, setCanReview] = useState(false)
-  const [alreadyReviewed, setAlreadyReviewed] = useState(false)
-  const [purchased, setPurchased] = useState(false)
+ const [canReview, setCanReview] = useState(false)
+const [alreadyReviewed, setAlreadyReviewed] = useState(false)
+const [purchased, setPurchased] = useState(false)
+const [delivered, setDelivered] = useState(false)
 
   const [rating, setRating] = useState(5)
   const [reviewText, setReviewText] = useState('')
@@ -73,6 +74,7 @@ export default function ProductPage() {
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite)
   const favoriteItems = useFavoritesStore((state) => state.items)
   const token = useAuthStore((state) => state.token)
+  
 
   useEffect(() => {
     if (!slug) return
@@ -101,8 +103,9 @@ export default function ProductPage() {
       loadCanReview(product.id)
     } else {
       setCanReview(false)
-      setAlreadyReviewed(false)
-      setPurchased(false)
+setAlreadyReviewed(false)
+setPurchased(false)
+setDelivered(false)
     }
   }, [product?.id, token])
 
@@ -120,9 +123,10 @@ export default function ProductPage() {
   const loadCanReview = async (productId: string) => {
     try {
       const res = await canReviewProduct(productId)
-      setCanReview(res.data.canReview)
-      setAlreadyReviewed(res.data.alreadyReviewed)
-      setPurchased(res.data.purchased)
+     setCanReview(res.data.canReview)
+setAlreadyReviewed(res.data.alreadyReviewed)
+setPurchased(res.data.purchased)
+setDelivered(res.data.delivered)
     } catch (error) {
       console.error('Ошибка проверки возможности отзыва:', error)
     }
@@ -343,6 +347,12 @@ export default function ProductPage() {
             Оставить отзыв может только пользователь, который купил этот товар
           </div>
         )}
+
+        {token && purchased && !delivered && !alreadyReviewed && (
+  <div className="mt-6 rounded-2xl bg-blue-50 p-4 text-sm text-blue-700">
+    Отзыв можно оставить только после доставки товара
+  </div>
+)}
 
         {!token && (
           <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
