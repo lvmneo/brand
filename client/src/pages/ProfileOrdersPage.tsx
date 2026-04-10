@@ -58,116 +58,140 @@ export default function ProfileOrdersPage() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-      <aside className="h-fit rounded-3xl border bg-white p-5 shadow-sm">
-        <h2 className="mb-5 text-3xl font-bold">Аккаунт</h2>
+      <aside className="h-fit rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/[0.04]">
+        <h2 className="text-2xl font-bold text-neutral-900">Аккаунт</h2>
 
-        <nav className="flex flex-col gap-3">
+        <div className="mt-6 space-y-3">
           <Link
             to="/profile"
-            className="rounded-2xl px-4 py-3 text-sm font-medium transition hover:bg-slate-100"
+            className="block rounded-2xl px-4 py-3 font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
           >
             Профиль
           </Link>
 
           <Link
             to="/profile/orders"
-            className="rounded-2xl bg-black px-4 py-3 text-sm font-medium text-white"
+            className="block rounded-2xl bg-black px-4 py-3 font-semibold text-white"
           >
             Мои заказы
           </Link>
-        </nav>
+
+          <Link
+            to="/profile/reviews"
+            className="block rounded-2xl px-4 py-3 font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
+          >
+            Мои отзывы
+          </Link>
+        </div>
       </aside>
 
-      <section className="rounded-3xl border bg-white p-7 shadow-sm">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-5xl font-bold">Мои заказы</h1>
-          <div className="text-sm text-slate-500">
-            Всего заказов: {orders.length}
+      <section className="space-y-6">
+        <div className="rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h1 className="text-5xl font-bold text-neutral-900">Мои заказы</h1>
+              <p className="mt-3 text-sm text-slate-500">
+                История всех твоих заказов
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-[#f8fbff] px-4 py-3 text-sm font-semibold text-[#005bff]">
+              Всего заказов: {orders.length}
+            </div>
           </div>
-        </div>
 
-        {isLoading && (
-          <div className="text-slate-600">Загрузка заказов...</div>
-        )}
+          {isLoading && (
+            <div className="mt-8 text-slate-600">Загрузка заказов...</div>
+          )}
 
-        {!isLoading && orders.length === 0 && (
-          <div className="rounded-2xl border border-dashed p-6 text-slate-600">
-            У вас пока нет заказов
-          </div>
-        )}
+          {!isLoading && orders.length === 0 && (
+            <div className="mt-8 rounded-2xl border border-dashed p-8 text-slate-600">
+              У вас пока нет заказов
+            </div>
+          )}
 
-        <div className="space-y-4">
-          {orders.map((order) => (
-            <div
-              key={order.id}
-              className="rounded-3xl border p-5 shadow-sm"
-            >
-              <div className="mb-4 flex flex-col gap-3 border-b pb-4 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <div className="text-sm text-slate-500">Номер заказа</div>
-                  <div className="font-semibold break-all">{order.id}</div>
-                </div>
-
-                <div>
-                  <div className="text-sm text-slate-500">Дата</div>
-                  <div className="font-semibold">
-                    {new Date(order.createdAt).toLocaleDateString('ru-RU')}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-sm text-slate-500">Сумма</div>
-                  <div className="font-semibold">{order.totalAmount} ₽</div>
-                </div>
-
-                <div>
-                  <div className="text-sm text-slate-500">Статус</div>
-                  <span
-                    className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                      statusClassMap[order.status] || 'bg-slate-100 text-slate-700'
-                    }`}
-                  >
-                    {statusMap[order.status] || order.status}
-                  </span>
-                </div>
-
-                <div>
-                  <Link
-                    to={`/profile/orders/${order.id}`}
-                    className="inline-flex rounded-2xl border px-4 py-2 text-sm font-medium transition hover:bg-slate-100"
-                  >
-                    Подробнее
-                  </Link>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {order.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-4 rounded-2xl border p-3"
-                  >
-                    <img
-                      src={item.product.imageUrl || 'https://placehold.co/100x100'}
-                      alt={item.product.title}
-                      className="h-16 w-16 rounded-xl object-cover"
-                    />
-
-                    <div className="flex-1">
-                      <div className="font-medium">{item.product.title}</div>
-                      <div className="text-sm text-slate-500">
-                        {item.quantity} шт.
+          {!isLoading && orders.length > 0 && (
+            <div className="mt-8 space-y-4">
+              {orders.map((order) => (
+                <div
+                  key={order.id}
+                  className="rounded-3xl border border-[#d7e3f8] bg-white p-5 shadow-sm transition hover:shadow-md"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <div className="text-sm text-slate-500">Номер заказа</div>
+                      <div className="mt-1 break-all font-semibold text-neutral-900">
+                        {order.id}
                       </div>
                     </div>
 
-                    <div className="font-semibold">
-                      {item.product.price * item.quantity} ₽
+                    <div>
+                      <div className="text-sm text-slate-500">Дата</div>
+                      <div className="mt-1 font-semibold">
+                        {new Date(order.createdAt).toLocaleDateString('ru-RU')}
+                      </div>
                     </div>
+
+                    <div>
+                      <div className="text-sm text-slate-500">Сумма</div>
+                      <div className="mt-1 font-semibold">
+                        {order.totalAmount} ₽
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-sm text-slate-500">Статус</div>
+                      <div className="mt-1">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                            statusClassMap[order.status] || 'bg-slate-100 text-slate-700'
+                          }`}
+                        >
+                          {statusMap[order.status] || order.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    <Link
+                      to={`/profile/orders/${order.id}`}
+                      className="rounded-2xl bg-[#005bff] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0047cc]"
+                    >
+                      Подробнее
+                    </Link>
                   </div>
-                ))}
-              </div>
+
+                  <div className="mt-5 flex gap-3 overflow-x-auto pb-1">
+                    {order.items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="min-w-[220px] rounded-2xl border border-[#d7e3f8] bg-[#f8fbff] p-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={item.product.imageUrl || 'https://placehold.co/100x100'}
+                            alt={item.product.title}
+                            className="h-16 w-16 rounded-xl object-cover"
+                          />
+
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-medium text-neutral-900">
+                              {item.product.title}
+                            </div>
+                            <div className="mt-1 text-sm text-slate-500">
+                              {item.quantity} шт.
+                            </div>
+                            <div className="mt-1 text-sm font-semibold text-neutral-900">
+                              {item.product.price * item.quantity} ₽
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
       </section>
     </div>

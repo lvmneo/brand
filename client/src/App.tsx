@@ -14,6 +14,7 @@ import RegisterPage from './pages/RegisterPage'
 import ProfilePage from './pages/ProfilePage'
 import ProfileOrdersPage from './pages/ProfileOrdersPage'
 import ProfileOrderDetailsPage from './pages/ProfileOrderDetailsPage'
+import ProfileReviewsPage from './pages/ProfileReviewsPage'
 
 export default function App() {
 const checkAuth = useAuthStore((state) => state.checkAuth)
@@ -42,6 +43,7 @@ if (loading) {
           <Route path="register" element={<RegisterPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="profile/orders" element={<ProfileOrdersPage />} />
+          <Route path="profile/reviews" element={<ProfileReviewsPage />} />
           <Route
             path="profile/orders/:id"
             element={<ProfileOrderDetailsPage />}
