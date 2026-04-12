@@ -217,39 +217,10 @@ export default function ProfileOrderDetailsPage() {
   const isCancelled = order?.status === 'CANCELLED'
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-      <aside className="h-fit rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/[0.04]">
-        <h2 className="text-2xl font-bold text-neutral-900">Аккаунт</h2>
-
-        <div className="mt-6 space-y-3">
-          <Link
-            to="/profile"
-            className="block rounded-2xl px-4 py-3 font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
-          >
-            Профиль
-          </Link>
-
-          <Link
-            to="/profile/orders"
-            className="block rounded-2xl bg-black px-4 py-3 font-semibold text-white"
-          >
-            Мои заказы
-          </Link>
-
-          {user?.role === 'USER' && (
-            <Link
-              to="/profile/reviews"
-              className="block rounded-2xl px-4 py-3 font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
-            >
-              Мои отзывы
-            </Link>
-          )}
-        </div>
-      </aside>
-
-      <section className="space-y-6">
-        <div className="rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
-          <div className="mb-6 flex items-center justify-between gap-4">
+    <div className="mx-auto max-w-7xl px-4 py-8">
+      <div className="space-y-6">
+        <section className="rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <Link
               to="/profile/orders"
               className="text-sm text-slate-500 transition hover:text-[#005bff]"
@@ -257,14 +228,39 @@ export default function ProfileOrderDetailsPage() {
               ← Назад к заказам
             </Link>
 
-            {order && (
-              <button
-                onClick={handleRepeatOrder}
-                className="rounded-2xl bg-black px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to="/profile"
+                className="rounded-2xl border border-[#d7e3f8] px-4 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
               >
-                Повторить заказ
-              </button>
-            )}
+                Профиль
+              </Link>
+
+              <Link
+                to="/profile/orders"
+                className="rounded-2xl border border-[#d7e3f8] px-4 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
+              >
+                Мои заказы
+              </Link>
+
+              {user?.role === 'USER' && (
+                <Link
+                  to="/profile/reviews"
+                  className="rounded-2xl border border-[#d7e3f8] px-4 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
+                >
+                  Мои отзывы
+                </Link>
+              )}
+
+              {order && (
+                <button
+                  onClick={handleRepeatOrder}
+                  className="rounded-2xl bg-black px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+                >
+                  Повторить заказ
+                </button>
+              )}
+            </div>
           </div>
 
           {isLoading ? (
@@ -278,7 +274,7 @@ export default function ProfileOrderDetailsPage() {
               <div className="flex flex-wrap items-end justify-between gap-4 border-b pb-6">
                 <div>
                   <div className="text-sm text-slate-500">Номер заказа</div>
-                  <h1 className="mt-2 break-all text-5xl font-bold text-neutral-900">
+                  <h1 className="mt-2 break-all text-4xl font-bold text-neutral-900 md:text-5xl">
                     {order.id}
                   </h1>
                 </div>
@@ -364,7 +360,7 @@ export default function ProfileOrderDetailsPage() {
                 )}
               </div>
 
-              <div className="mt-8 grid gap-4 md:grid-cols-2">
+              <div className="mt-8 grid gap-4 lg:grid-cols-2">
                 <div className="rounded-3xl border border-[#d7e3f8] bg-white p-5 shadow-sm">
                   <h2 className="text-xl font-bold text-neutral-900">
                     Получатель и доставка
@@ -548,7 +544,7 @@ export default function ProfileOrderDetailsPage() {
                             )}
                         </div>
 
-                        <div className="text-right">
+                        <div className="text-left md:text-right">
                           <div className="text-sm text-slate-500">Итого</div>
                           <div className="mt-1 text-3xl font-bold text-neutral-900">
                             {item.price * item.quantity} ₽
@@ -618,8 +614,8 @@ export default function ProfileOrderDetailsPage() {
               </div>
             </>
           )}
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   )
 }
