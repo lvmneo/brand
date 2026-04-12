@@ -217,109 +217,122 @@ export default function ProfileOrderDetailsPage() {
   const isCancelled = order?.status === 'CANCELLED'
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <div className="space-y-6">
-        <section className="rounded-[28px] bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <Link
-              to="/profile/orders"
-              className="text-sm text-slate-500 transition hover:text-[#005bff]"
-            >
-              ← Назад к заказам
-            </Link>
-
-            <div className="flex flex-wrap gap-3">
-              <Link
-                to="/profile"
-                className="rounded-2xl border border-[#d7e3f8] px-4 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
-              >
-                Профиль
-              </Link>
-
-              <Link
-                to="/profile/orders"
-                className="rounded-2xl border border-[#d7e3f8] px-4 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
-              >
-                Мои заказы
-              </Link>
-
-              {user?.role === 'USER' && (
+    <div className="min-h-screen bg-[#f4f7fb] pb-10">
+      <div className="mx-auto max-w-7xl px-4 py-6">
+        <div className="space-y-6">
+          <section className="overflow-hidden rounded-[30px] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] ring-1 ring-black/[0.04]">
+            <div className="bg-[linear-gradient(135deg,#005bff_0%,#2e7cff_58%,#ff4db8_140%)] px-6 py-8 text-white md:px-8">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <Link
-                  to="/profile/reviews"
-                  className="rounded-2xl border border-[#d7e3f8] px-4 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
+                  to="/profile/orders"
+                  className="inline-flex items-center rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/15"
                 >
-                  Мои отзывы
+                  ← Назад к заказам
                 </Link>
-              )}
 
-              {order && (
-                <button
-                  onClick={handleRepeatOrder}
-                  className="rounded-2xl bg-black px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-                >
-                  Повторить заказ
-                </button>
-              )}
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="text-slate-500">Загрузка заказа...</div>
-          ) : !order ? (
-            <div className="rounded-2xl border border-dashed p-8 text-slate-500">
-              Заказ не найден
-            </div>
-          ) : (
-            <>
-              <div className="flex flex-wrap items-end justify-between gap-4 border-b pb-6">
-                <div>
-                  <div className="text-sm text-slate-500">Номер заказа</div>
-                  <h1 className="mt-2 break-all text-4xl font-bold text-neutral-900 md:text-5xl">
-                    {order.id}
-                  </h1>
-                </div>
-
-                <div className="flex flex-wrap gap-6">
-                  <div>
-                    <div className="text-sm text-slate-500">Дата</div>
-                    <div className="mt-1 text-xl font-semibold">
-                      {new Date(order.createdAt).toLocaleDateString('ru-RU')}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-sm text-slate-500">Сумма</div>
-                    <div className="mt-1 text-xl font-semibold">
-                      {order.totalAmount} ₽
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-sm text-slate-500">Статус</div>
-                    <div className="mt-1">
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                          statusClassMap[order.status] || 'bg-slate-100 text-slate-700'
-                        }`}
-                      >
-                        {statusMap[order.status] || order.status}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                {order && (
+                  <button
+                    onClick={handleRepeatOrder}
+                    className="cursor-pointer rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-[#005bff] shadow-sm transition hover:-translate-y-0.5"
+                  >
+                    Повторить заказ
+                  </button>
+                )}
               </div>
 
-              <div className="mt-8 rounded-3xl bg-[#f8fbff] p-5">
-                <div className="mb-4 text-lg font-semibold text-neutral-900">
-                  Статус заказа
+              {isLoading ? (
+                <div className="mt-8 text-white/80">Загрузка заказа...</div>
+              ) : !order ? (
+                <div className="mt-8 rounded-2xl border border-white/20 bg-white/10 p-6 text-white/90">
+                  Заказ не найден
                 </div>
+              ) : (
+                <>
+                  <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
+                    <div>
+                      <div className="text-sm text-white/75">Номер заказа</div>
+                      <h1 className="mt-2 break-all text-3xl font-bold md:text-5xl">
+                        {order.id}
+                      </h1>
+                    </div>
+
+                    <div className="flex flex-wrap gap-6">
+                      <div>
+                        <div className="text-sm text-white/75">Дата</div>
+                        <div className="mt-1 text-xl font-semibold">
+                          {new Date(order.createdAt).toLocaleDateString('ru-RU')}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-sm text-white/75">Сумма</div>
+                        <div className="mt-1 text-xl font-semibold">
+                          {order.totalAmount} ₽
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-sm text-white/75">Статус</div>
+                        <div className="mt-2">
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                              statusClassMap[order.status] ||
+                              'bg-white/20 text-white'
+                            }`}
+                          >
+                            {statusMap[order.status] || order.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {!isLoading && order && (
+              <div className="p-6 md:p-8">
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    to="/profile"
+                    className="inline-flex cursor-pointer rounded-2xl border border-[#d7e3f8] px-4 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
+                  >
+                    Профиль
+                  </Link>
+
+                  <Link
+                    to="/profile/orders"
+                    className="inline-flex cursor-pointer rounded-2xl bg-[#eef5ff] px-4 py-2 text-sm font-semibold text-[#005bff]"
+                  >
+                    Мои заказы
+                  </Link>
+
+                  {user?.role === 'USER' && (
+                    <Link
+                      to="/profile/reviews"
+                      className="inline-flex cursor-pointer rounded-2xl border border-[#d7e3f8] px-4 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-[#f4f7fb]"
+                    >
+                      Мои отзывы
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
+
+          {!isLoading && order && (
+            <>
+              <section className="rounded-[30px] bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.06)] ring-1 ring-black/[0.04] md:p-8">
+                <h2 className="text-2xl font-bold text-neutral-900">
+                  Статус заказа
+                </h2>
 
                 {isCancelled ? (
-                  <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                  <div className="mt-6 rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
                     Заказ отменён
                   </div>
                 ) : (
-                  <div className="grid gap-4 md:grid-cols-4">
+                  <div className="mt-6 grid gap-4 md:grid-cols-4">
                     {statusSteps.map((step, index) => {
                       const isActive = currentStepIndex >= index
                       const isCurrent = order.status === step
@@ -327,14 +340,14 @@ export default function ProfileOrderDetailsPage() {
                       return (
                         <div key={step}>
                           <div
-                            className={`rounded-2xl border px-4 py-4 text-center transition ${
+                            className={`rounded-[24px] border px-4 py-5 text-center transition ${
                               isActive
-                                ? 'border-[#005bff] bg-white text-[#005bff]'
+                                ? 'border-[#005bff] bg-[#eef5ff] text-[#005bff]'
                                 : 'border-[#d7e3f8] bg-white text-slate-400'
                             }`}
                           >
                             <div
-                              className={`mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                              className={`mx-auto mb-3 flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${
                                 isActive
                                   ? 'bg-[#005bff] text-white'
                                   : 'bg-slate-100 text-slate-400'
@@ -358,10 +371,10 @@ export default function ProfileOrderDetailsPage() {
                     })}
                   </div>
                 )}
-              </div>
+              </section>
 
-              <div className="mt-8 grid gap-4 lg:grid-cols-2">
-                <div className="rounded-3xl border border-[#d7e3f8] bg-white p-5 shadow-sm">
+              <section className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-[30px] border border-[#d7e3f8] bg-white p-5 shadow-sm">
                   <h2 className="text-xl font-bold text-neutral-900">
                     Получатель и доставка
                   </h2>
@@ -420,10 +433,8 @@ export default function ProfileOrderDetailsPage() {
                   </div>
                 </div>
 
-                <div className="rounded-3xl border border-[#d7e3f8] bg-white p-5 shadow-sm">
-                  <h2 className="text-xl font-bold text-neutral-900">
-                    Оплата
-                  </h2>
+                <div className="rounded-[30px] border border-[#d7e3f8] bg-white p-5 shadow-sm">
+                  <h2 className="text-xl font-bold text-neutral-900">Оплата</h2>
 
                   <div className="mt-5 space-y-3 text-sm">
                     <div className="flex items-start justify-between gap-4">
@@ -473,16 +484,16 @@ export default function ProfileOrderDetailsPage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </section>
 
-              <div className="mt-8 space-y-4">
+              <section className="space-y-4">
                 {order.items.map((item) => {
                   const reviewInfo = reviewPermissions[item.product.id]
 
                   return (
                     <div
                       key={item.id}
-                      className="rounded-3xl border border-[#d7e3f8] bg-white p-5 shadow-sm transition hover:shadow-md"
+                      className="rounded-[30px] border border-[#d7e3f8] bg-white p-5 shadow-sm transition duration-200 hover:shadow-md"
                     >
                       <div className="flex flex-col gap-4 md:flex-row md:items-start">
                         <img
@@ -513,7 +524,7 @@ export default function ProfileOrderDetailsPage() {
                           <div className="mt-5 flex flex-wrap gap-3">
                             <Link
                               to={`/products/${item.product.slug}`}
-                              className="rounded-2xl border border-[#d7e3f8] px-4 py-2 text-sm font-semibold text-[#005bff] transition hover:bg-[#eef5ff]"
+                              className="inline-flex rounded-2xl border border-[#d7e3f8] px-4 py-2 text-sm font-semibold text-[#005bff] transition hover:bg-[#eef5ff]"
                             >
                               Открыть товар
                             </Link>
@@ -522,7 +533,7 @@ export default function ProfileOrderDetailsPage() {
                               <button
                                 type="button"
                                 onClick={() => handleOpenReview(item.product.id)}
-                                className="rounded-2xl bg-[#005bff] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0047cc]"
+                                className="cursor-pointer rounded-2xl bg-[#005bff] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0047cc]"
                               >
                                 Оставить отзыв
                               </button>
@@ -553,7 +564,7 @@ export default function ProfileOrderDetailsPage() {
                       </div>
 
                       {openReviewProductId === item.product.id && (
-                        <div className="mt-5 rounded-2xl bg-[#f8fbff] p-4">
+                        <div className="mt-5 rounded-[24px] bg-[#f8fbff] p-4">
                           <h3 className="text-lg font-semibold text-neutral-900">
                             Новый отзыв
                           </h3>
@@ -565,7 +576,7 @@ export default function ProfileOrderDetailsPage() {
                             <select
                               value={reviewRating}
                               onChange={(e) => setReviewRating(Number(e.target.value))}
-                              className="w-full rounded-2xl border border-[#d7e3f8] bg-white px-4 py-3 outline-none transition focus:border-[#9dc0ff] focus:ring-4 focus:ring-[#005bff]/10"
+                              className="w-full cursor-pointer rounded-2xl border border-[#d7e3f8] bg-white px-4 py-3 outline-none transition focus:border-[#9dc0ff] focus:ring-4 focus:ring-[#005bff]/10"
                             >
                               <option value={5}>5 — Отлично</option>
                               <option value={4}>4 — Хорошо</option>
@@ -593,7 +604,7 @@ export default function ProfileOrderDetailsPage() {
                               type="button"
                               disabled={submittingReview}
                               onClick={() => handleSubmitReview(item.product.id)}
-                              className="rounded-2xl bg-[#005bff] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0047cc] disabled:cursor-not-allowed disabled:opacity-60"
+                              className="cursor-pointer rounded-2xl bg-[#005bff] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0047cc] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {submittingReview ? 'Отправка...' : 'Отправить отзыв'}
                             </button>
@@ -601,7 +612,7 @@ export default function ProfileOrderDetailsPage() {
                             <button
                               type="button"
                               onClick={() => setOpenReviewProductId(null)}
-                              className="rounded-2xl border border-[#d7e3f8] px-5 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-white"
+                              className="cursor-pointer rounded-2xl border border-[#d7e3f8] bg-white px-5 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-[#f8fbff]"
                             >
                               Отмена
                             </button>
@@ -611,10 +622,10 @@ export default function ProfileOrderDetailsPage() {
                     </div>
                   )
                 })}
-              </div>
+              </section>
             </>
           )}
-        </section>
+        </div>
       </div>
     </div>
   )

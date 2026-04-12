@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { api } from '../shared/api'
 import { useFavoritesStore } from '../store/favoritesStore'
 import { useCartStore } from '../store/cartStore'
+import CatalogFilters from '../components/CatalogFilters'
+import ProductCatalogCard from '../components/ProductCatalogCard'
 
 type Product = {
   id: string
@@ -144,178 +146,152 @@ export default function ProductsPage() {
     updateSearchParams(search, selectedCategory, selectedBrand, value)
   }
 
-  if (loading) {
-    return <div>Загрузка товаров...</div>
+  const handleResetFilters = () => {
+    setSearch('')
+    setSelectedCategory('all')
+    setSelectedBrand('all')
+    setSortBy('default')
+    setSearchParams(new URLSearchParams())
   }
 
-  return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Товары</h1>
-        <p className="mt-2 text-slate-600">
-          Поиск, фильтрация и сортировка товаров
-        </p>
-      </div>
-
-      <div className="mb-8 grid gap-4 rounded-3xl border bg-white p-5 shadow-sm md:grid-cols-2 xl:grid-cols-4">
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-600">
-            Поиск
-          </label>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Поиск по товарам или брендам..."
-            className="w-full rounded-2xl border bg-white px-4 py-3 outline-none transition focus:border-black"
-          />
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-600">
-            Категория
-          </label>
-          <select
-            value={selectedCategory}
-            onChange={(e) => handleCategoryChange(e.target.value)}
-            className="w-full rounded-2xl border bg-white px-4 py-3 outline-none transition focus:border-black"
-          >
-            <option value="all">Все категории</option>
-            {categories.map((category) => (
-              <option key={category.slug} value={category.slug}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-600">
-            Бренд
-          </label>
-          <select
-            value={selectedBrand}
-            onChange={(e) => handleBrandChange(e.target.value)}
-            className="w-full rounded-2xl border bg-white px-4 py-3 outline-none transition focus:border-black"
-          >
-            <option value="all">Все бренды</option>
-            {brands.map((brand) => (
-              <option key={brand.name} value={brand.name}>
-                {brand.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-600">
-            Сортировка
-          </label>
-          <select
-            value={sortBy}
-            onChange={(e) => handleSortChange(e.target.value as SortOption)}
-            className="w-full rounded-2xl border bg-white px-4 py-3 outline-none transition focus:border-black"
-          >
-            <option value="default">По умолчанию</option>
-            <option value="price-asc">Цена: по возрастанию</option>
-            <option value="price-desc">Цена: по убыванию</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="mb-6 text-sm text-slate-500">
-        Найдено товаров: <span className="font-semibold">{filteredProducts.length}</span>
-      </div>
-
-      {filteredProducts.length === 0 ? (
-        <div className="rounded-2xl border bg-white p-8 text-center shadow-sm">
-          <h2 className="text-xl font-semibold">Ничего не найдено</h2>
-          <p className="mt-2 text-slate-500">
-            Попробуй изменить фильтры, сортировку или поисковый запрос
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {filteredProducts.map((product) => {
-            const isFavorite = favoriteItems.some((item) => item.id === product.id)
-
-            return (
-              <div
-                key={product.id}
-                className="group relative rounded-2xl border bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-              >
-                <button
-                  onClick={() =>
-                    toggleFavorite({
-                      id: product.id,
-                      title: product.title,
-                      slug: product.slug,
-                      price: product.price,
-                      imageUrl: product.imageUrl,
-                      brandName: product.brand.name,
-                    })
-                  }
-                  className="absolute right-3 top-3 z-10 cursor-pointer rounded-full bg-white px-3 py-2 text-lg shadow"
-                >
-                  {isFavorite ? '❤️' : '🤍'}
-                </button>
-
-                <Link to={`/products/${product.slug}`} className="block cursor-pointer">
-                  <img
-                    src={product.imageUrl || 'https://placehold.co/400x400'}
-                    alt={product.title}
-                    className="h-40 w-full rounded-xl object-cover"
-                  />
-
-                  <div className="mt-2 flex items-center justify-between gap-2">
-                    <p className="text-sm text-gray-500">{product.brand.name}</p>
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">
-                      {product.category.name}
-                    </span>
-                  </div>
-
-                  <h2 className="mt-2 font-semibold">{product.title}</h2>
-
-                  <p className="mt-2 text-lg font-bold">{product.price} ₽</p>
-                  <div className="mt-4">
-                    <p
-  className={`mt-2 text-sm ${
-    product.stock === 0 ? 'text-red-500' : 'text-emerald-600'
-  }`}
->
-  {product.stock === 0 ? 'Нет в наличии' : `В наличии: ${product.stock}`}
-</p>
-  <button
-    type="button"
-    disabled={product.stock === 0}
-    onClick={(e) => {
-      e.preventDefault()
-      e.stopPropagation()
-
-      if (product.stock === 0) return
-
-      addToCart({
-        id: product.id,
-        title: product.title,
-        price: product.price,
-        imageUrl: product.imageUrl,
-      })
-    }}
-    className={`w-full rounded-2xl py-3 text-sm font-semibold text-white transition ${
-      product.stock === 0
-        ? 'cursor-not-allowed bg-neutral-400'
-        : 'cursor-pointer bg-[#005bff] hover:bg-[#0047cc]'
-    }`}
-  >
-    {product.stock === 0 ? 'Нет в наличии' : 'В корзину'}
-  </button>
-</div>
-                </Link>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f4f7fb] pb-10">
+        <div className="mx-auto max-w-7xl px-4 py-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-28 rounded-[28px] bg-white" />
+            <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+              <div className="h-[520px] rounded-[28px] bg-white" />
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="h-80 rounded-[28px] bg-white" />
+                <div className="h-80 rounded-[28px] bg-white" />
+                <div className="h-80 rounded-[28px] bg-white" />
               </div>
-            )
-          })}
+            </div>
+          </div>
         </div>
-      )}
+      </div>
+    )
+  }
+
+  const categoryOptions = [
+    { label: 'Все категории', value: 'all' },
+    ...categories.map((category) => ({
+      label: category.name,
+      value: category.slug,
+    })),
+  ]
+
+  const brandOptions = [
+    { label: 'Все бренды', value: 'all' },
+    ...brands.map((brand) => ({
+      label: brand.name,
+      value: brand.name,
+    })),
+  ]
+
+  const sortOptions = [
+    { label: 'По умолчанию', value: 'default' },
+    { label: 'Цена: по возрастанию', value: 'price-asc' },
+    { label: 'Цена: по убыванию', value: 'price-desc' },
+  ]
+
+  return (
+    <div className="min-h-screen bg-[#f4f7fb] pb-10">
+      <div className="mx-auto max-w-7xl px-4 py-6">
+        <section className="rounded-[30px] bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.06)] ring-1 ring-black/[0.04] md:p-8">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-neutral-900 md:text-4xl">
+                Товары
+              </h1>
+              <p className="mt-2 text-sm text-neutral-500">
+                Каталог всех товаров с поиском, фильтрацией и сортировкой
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-[#eef5ff] px-4 py-3 text-sm font-semibold text-[#005bff]">
+              Найдено: {filteredProducts.length}
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-6 grid gap-6 lg:grid-cols-[280px_1fr]">
+          <CatalogFilters
+            title="Фильтры"
+            subtitle="Подбери нужные товары"
+            searchLabel="Поиск"
+            searchPlaceholder="Поиск по товарам или брендам..."
+            searchValue={search}
+            onSearchChange={handleSearchChange}
+            categoryValue={selectedCategory}
+            onCategoryChange={handleCategoryChange}
+            categoryOptions={categoryOptions}
+            brandValue={selectedBrand}
+            onBrandChange={handleBrandChange}
+            brandOptions={brandOptions}
+            sortValue={sortBy}
+            onSortChange={(value) => handleSortChange(value as SortOption)}
+            sortOptions={sortOptions}
+            resultsCount={filteredProducts.length}
+            onReset={handleResetFilters}
+          />
+
+          <div className="min-w-0">
+            <section className="rounded-[30px] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] ring-1 ring-black/[0.04] md:p-6">
+              {filteredProducts.length === 0 ? (
+                <div className="rounded-[24px] border border-dashed border-[#d7e3f8] bg-[#f8fbff] p-10 text-center">
+                  <h2 className="text-xl font-semibold text-neutral-900">
+                    Ничего не найдено
+                  </h2>
+                  <p className="mt-2 text-sm text-neutral-500">
+                    Попробуй изменить фильтры, сортировку или поисковый запрос
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {filteredProducts.map((product) => {
+                    const isFavorite = favoriteItems.some((item) => item.id === product.id)
+
+                    return (
+                      <ProductCatalogCard
+                        key={product.id}
+                        id={product.id}
+                        title={product.title}
+                        slug={product.slug}
+                        price={product.price}
+                        stock={product.stock}
+                        imageUrl={product.imageUrl}
+                        brandName={product.brand.name}
+                        categoryName={product.category.name}
+                        isFavorite={isFavorite}
+                        onToggleFavorite={() =>
+                          toggleFavorite({
+                            id: product.id,
+                            title: product.title,
+                            slug: product.slug,
+                            price: product.price,
+                            imageUrl: product.imageUrl,
+                            brandName: product.brand.name,
+                          })
+                        }
+                        onAddToCart={() =>
+                          addToCart({
+                            id: product.id,
+                            title: product.title,
+                            price: product.price,
+                            imageUrl: product.imageUrl,
+                          })
+                        }
+                      />
+                    )
+                  })}
+                </div>
+              )}
+            </section>
+          </div>
+        </section>
+      </div>
     </div>
   )
 }
