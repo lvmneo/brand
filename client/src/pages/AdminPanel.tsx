@@ -173,9 +173,9 @@ export default function AdminPanel({ activeTab }: AdminPanelProps) {
   const [brandSearch, setBrandSearch] = useState('')
   const [categorySearch, setCategorySearch] = useState('')
 
-  useEffect(() => {
-    loadAdminData()
-  }, [])
+useEffect(() => {
+  loadAdminData()
+}, [activeTab])
 
   const loadAdminData = async () => {
     try {

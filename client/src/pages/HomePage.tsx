@@ -28,6 +28,14 @@ type Product = {
   }
 }
 
+const categoryIcons: Record<string, string> = {
+  clothes: '👕',
+  shoes: '👟',
+  electronics: '📱',
+  cosmetics: '💄',
+  accessories: '👜',
+}
+
 export default function HomePage() {
   const [brands, setBrands] = useState<Brand[]>([])
   const [products, setProducts] = useState<Product[]>([])
@@ -193,39 +201,41 @@ export default function HomePage() {
     </Link>
   </div>
 
-  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-    {categories.map((category) => (
-      <Link
-        key={category.slug}
-        to={`/products?category=${category.slug}`}
-        className="group rounded-[24px] border border-[#e6eef9] bg-[#f8fbff] p-5 transition duration-200 hover:-translate-y-1 hover:border-[#cfe0ff] hover:bg-white hover:shadow-[0_12px_30px_rgba(0,91,255,0.10)] active:translate-y-0 active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-[#005bff]/10"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#005bff] text-lg font-bold text-white shadow-[0_10px_20px_rgba(0,91,255,0.18)] transition duration-200 group-hover:scale-105">
-            {category.name.charAt(0).toUpperCase()}
-          </div>
-
-          <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#005bff] shadow-sm">
-            {category.count}
+<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+  {categories.map((category) => (
+    <Link
+      key={category.slug}
+      to={`/products?category=${category.slug}`}
+      className="group rounded-[24px] border border-[#e6eef9] bg-[#f8fbff] p-5 transition duration-200 hover:-translate-y-1 hover:border-[#cfe0ff] hover:bg-white hover:shadow-[0_12px_30px_rgba(0,91,255,0.10)] active:translate-y-0 active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-[#005bff]/10"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#005bff] text-2xl text-white shadow-[0_10px_20px_rgba(0,91,255,0.18)] transition duration-200 group-hover:scale-105">
+          <span role="img" aria-label={category.name}>
+            {categoryIcons[category.slug] || '📦'}
           </span>
         </div>
 
-        <div className="mt-5 text-sm text-neutral-500">Категория</div>
+        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#005bff] shadow-sm">
+          {category.count}
+        </span>
+      </div>
 
-        <h3 className="mt-2 text-2xl font-bold text-neutral-900">
-          {category.name}
-        </h3>
+      <div className="mt-5 text-sm text-neutral-500">Категория</div>
 
-        <p className="mt-3 text-sm text-neutral-500">
-          {category.count} товаров в подборке
-        </p>
+      <h3 className="mt-2 text-2xl font-bold text-neutral-900">
+        {category.name}
+      </h3>
 
-        <div className="mt-5 inline-flex items-center text-sm font-semibold text-[#005bff] transition duration-200 group-hover:translate-x-1">
-          Перейти →
-        </div>
-      </Link>
-    ))}
-  </div>
+      <p className="mt-3 text-sm text-neutral-500">
+        {category.count} товаров в подборке
+      </p>
+
+      <div className="mt-5 inline-flex items-center text-sm font-semibold text-[#005bff] transition duration-200 group-hover:translate-x-1">
+        Перейти →
+      </div>
+    </Link>
+  ))}
+</div>
 </section>
 
 <section className="mt-6">

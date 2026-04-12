@@ -25,7 +25,14 @@ router.get('/:slug', async (req, res) => {
     const brand = await prisma.brand.findUnique({
       where: { slug },
       include: {
-        products: true,
+        products: {
+          include: {
+            category: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
       },
     })
 

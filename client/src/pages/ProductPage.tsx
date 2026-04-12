@@ -24,6 +24,7 @@ type Product = {
   }
   category?: {
     name: string
+    slug: string
   }
 }
 
@@ -36,6 +37,14 @@ type Review = {
     id: string
     name: string
   }
+}
+
+const categoryIcons: Record<string, string> = {
+  clothes: '👕',
+  shoes: '👟',
+  electronics: '📱',
+  cosmetics: '💄',
+  accessories: '👜',
 }
 
 const renderStars = (rating: number) => {
@@ -183,6 +192,9 @@ export default function ProductPage() {
   }
 
   const isFavorite = favoriteItems.some((item) => item.id === product.id)
+  const categoryIcon = product.category?.slug
+    ? categoryIcons[product.category.slug] || '📦'
+    : '📦'
 
   return (
     <div className="min-h-screen bg-[#f4f7fb] pb-10">
@@ -290,8 +302,9 @@ export default function ProductPage() {
 
               <div className="mt-6 flex flex-wrap gap-3">
                 {product.category?.name && (
-                  <span className="rounded-full border border-[#d7e3f8] bg-white px-4 py-2 text-sm font-semibold text-neutral-900">
-                    {product.category.name}
+                  <span className="inline-flex items-center gap-2 rounded-full border border-[#d7e3f8] bg-white px-4 py-2 text-sm font-semibold text-neutral-900">
+                    <span className="text-base">{categoryIcon}</span>
+                    <span>{product.category.name}</span>
                   </span>
                 )}
 

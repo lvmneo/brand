@@ -16,6 +16,9 @@ export default function Layout() {
   const logout = useAuthStore((state) => state.logout)
   const loadFromStorage = useAuthStore((state) => state.loadFromStorage)
 
+  const clearCart = useCartStore((state) => state.clearCart)
+  const clearFavorites = useFavoritesStore((state) => state.clearFavorites)
+
   const [search, setSearch] = useState('')
 
   useEffect(() => {
@@ -40,15 +43,12 @@ export default function Layout() {
     navigate(`/products?search=${encodeURIComponent(value)}`)
   }
 
- const clearCart = useCartStore((state) => state.clearCart)
-const clearFavorites = useFavoritesStore((state) => state.clearFavorites)
-
-const handleLogout = () => {
-  clearCart()
-  clearFavorites()
-  logout()
-  navigate('/')
-}
+  const handleLogout = () => {
+    clearCart()
+    clearFavorites()
+    logout()
+    navigate('/')
+  }
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     [
@@ -230,6 +230,94 @@ const handleLogout = () => {
       <main>
         <Outlet />
       </main>
+
+      <footer className="mt-10 border-t border-black/5 bg-white">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-2 xl:grid-cols-4">
+          <div>
+            <div className="text-2xl font-black tracking-[-0.04em]">
+              <span className="text-[#005bff]">Brand</span>
+              <span className="bg-gradient-to-r from-[#005bff] via-[#4a86ff] to-[#ff4db8] bg-clip-text text-transparent">
+                Mart
+              </span>
+            </div>
+
+            <p className="mt-3 text-sm leading-7 text-neutral-500">
+              Маркетплейс официальных брендов с удобным каталогом, избранным,
+              корзиной, отзывами и личным кабинетом.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-neutral-400">
+              Навигация
+            </h3>
+
+            <div className="mt-4 space-y-3 text-sm">
+              <Link to="/" className="block text-neutral-700 transition hover:text-[#005bff]">
+                Главная
+              </Link>
+              <Link to="/brands" className="block text-neutral-700 transition hover:text-[#005bff]">
+                Бренды
+              </Link>
+              <Link to="/products" className="block text-neutral-700 transition hover:text-[#005bff]">
+                Товары
+              </Link>
+              <Link to="/favorites" className="block text-neutral-700 transition hover:text-[#005bff]">
+                Избранное
+              </Link>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-neutral-400">
+              Покупателю
+            </h3>
+
+            <div className="mt-4 space-y-3 text-sm">
+              <Link to="/cart" className="block text-neutral-700 transition hover:text-[#005bff]">
+                Корзина
+              </Link>
+              <Link to="/profile" className="block text-neutral-700 transition hover:text-[#005bff]">
+                Личный кабинет
+              </Link>
+              <Link to="/profile/orders" className="block text-neutral-700 transition hover:text-[#005bff]">
+                Мои заказы
+              </Link>
+              <Link to="/profile/reviews" className="block text-neutral-700 transition hover:text-[#005bff]">
+                Мои отзывы
+              </Link>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-neutral-400">
+  О проекте
+</h3>
+
+<p className="mt-4 text-sm leading-7 text-neutral-500">
+  Дипломный проект маркетплейса с брендо-ориентированной архитектурой
+  на React, TypeScript, Express и Prisma.
+</p>
+
+<a
+  href="https://github.com/lvmneo/brand"
+  target="_blank"
+  rel="noreferrer"
+  className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-[#e6eef9] bg-[#f8fbff] px-4 py-2 text-sm font-semibold text-[#005bff] transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_6px_18px_rgba(0,91,255,0.15)]"
+>
+  <span>GitHub проекта</span>
+  <span>↗</span>
+</a>
+          </div>
+        </div>
+
+        <div className="border-t border-black/5">
+          <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4 text-sm text-neutral-500 md:flex-row md:items-center md:justify-between">
+            <div>© 2026 BrandMart. Все права защищены.</div>
+            <div>Дипломный проект</div>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
