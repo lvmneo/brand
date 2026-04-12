@@ -27,14 +27,17 @@ type Order = {
   status: string
   totalAmount: number
   deliveryPrice: number
-  recipientName: string
-  phone: string
-  city: string
-  address: string
+  recipientName?: string | null
+  phone?: string | null
+  city?: string | null
+  address?: string | null
   comment?: string | null
-  deliveryMethod: 'COURIER' | 'PICKUP'
-  paymentMethod: 'CARD' | 'SBP' | 'CASH'
+  deliveryMethod?: 'COURIER' | 'PICKUP' | null
+  paymentMethod?: 'CARD' | 'SBP' | 'CASH' | null
+  paymentStatus?: 'PENDING' | 'PAID' | 'FAILED' | null
   cardLast4?: string | null
+  cardBrand?: string | null
+  transactionId?: string | null
   createdAt: string
   items: OrderItem[]
 }
@@ -62,20 +65,35 @@ const statusClassMap: Record<string, string> = {
   CANCELLED: 'bg-red-100 text-red-800',
 }
 
+const paymentStatusMap: Record<string, string> = {
+  PENDING: 'Ожидает оплаты',
+  PAID: 'Оплачено',
+  FAILED: 'Ошибка оплаты',
+}
+
+const paymentStatusClassMap: Record<string, string> = {
+  PENDING: 'bg-yellow-100 text-yellow-800',
+  PAID: 'bg-green-100 text-green-800',
+  FAILED: 'bg-red-100 text-red-800',
+}
+
 const statusSteps = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED']
 
 function getCurrentStepIndex(status: string) {
   return statusSteps.indexOf(status)
 }
 
-function getDeliveryLabel(deliveryMethod: 'COURIER' | 'PICKUP') {
-  return deliveryMethod === 'COURIER' ? 'Курьер' : 'Самовывоз'
+function getDeliveryLabel(deliveryMethod?: 'COURIER' | 'PICKUP' | null) {
+  if (deliveryMethod === 'COURIER') return 'Курьер'
+  if (deliveryMethod === 'PICKUP') return 'Самовывоз'
+  return '—'
 }
 
-function getPaymentLabel(paymentMethod: 'CARD' | 'SBP' | 'CASH') {
+function getPaymentLabel(paymentMethod?: 'CARD' | 'SBP' | 'CASH' | null) {
   if (paymentMethod === 'CARD') return 'Карта онлайн'
   if (paymentMethod === 'SBP') return 'СБП'
-  return 'При получении'
+  if (paymentMethod === 'CASH') return 'При получении'
+  return '—'
 }
 
 export default function ProfileOrderDetailsPage() {
@@ -295,7 +313,6 @@ export default function ProfileOrderDetailsPage() {
                 </div>
               </div>
 
-              {/* ТРЕКЕР СТАТУСА */}
               <div className="mt-8 rounded-3xl bg-[#f8fbff] p-5">
                 <div className="mb-4 text-lg font-semibold text-neutral-900">
                   Статус заказа
@@ -347,7 +364,6 @@ export default function ProfileOrderDetailsPage() {
                 )}
               </div>
 
-              {/* ИНФОРМАЦИЯ О ДОСТАВКЕ И ОПЛАТЕ */}
               <div className="mt-8 grid gap-4 md:grid-cols-2">
                 <div className="rounded-3xl border border-[#d7e3f8] bg-white p-5 shadow-sm">
                   <h2 className="text-xl font-bold text-neutral-900">
@@ -358,21 +374,21 @@ export default function ProfileOrderDetailsPage() {
                     <div className="flex items-start justify-between gap-4">
                       <span className="text-slate-500">Получатель</span>
                       <span className="text-right font-semibold text-neutral-900">
-                        {order.recipientName}
+                        {order.recipientName || '—'}
                       </span>
                     </div>
 
                     <div className="flex items-start justify-between gap-4">
                       <span className="text-slate-500">Телефон</span>
                       <span className="text-right font-semibold text-neutral-900">
-                        {order.phone}
+                        {order.phone || '—'}
                       </span>
                     </div>
 
                     <div className="flex items-start justify-between gap-4">
                       <span className="text-slate-500">Город</span>
                       <span className="text-right font-semibold text-neutral-900">
-                        {order.city}
+                        {order.city || '—'}
                       </span>
                     </div>
 
@@ -386,7 +402,7 @@ export default function ProfileOrderDetailsPage() {
                     <div className="flex items-start justify-between gap-4">
                       <span className="text-slate-500">Адрес</span>
                       <span className="text-right font-semibold text-neutral-900">
-                        {order.address}
+                        {order.address || '—'}
                       </span>
                     </div>
 
@@ -421,11 +437,34 @@ export default function ProfileOrderDetailsPage() {
                       </span>
                     </div>
 
+                    <div className="flex items-start justify-between gap-4">
+                      <span className="text-slate-500">Статус оплаты</span>
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                          paymentStatusClassMap[order.paymentStatus || 'PENDING'] ||
+                          'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {paymentStatusMap[order.paymentStatus || 'PENDING'] ||
+                          order.paymentStatus ||
+                          '—'}
+                      </span>
+                    </div>
+
                     {order.paymentMethod === 'CARD' && order.cardLast4 && (
                       <div className="flex items-start justify-between gap-4">
                         <span className="text-slate-500">Карта</span>
                         <span className="text-right font-semibold text-neutral-900">
-                          **** **** **** {order.cardLast4}
+                          {order.cardBrand || 'Карта'} •••• {order.cardLast4}
+                        </span>
+                      </div>
+                    )}
+
+                    {order.transactionId && (
+                      <div className="flex items-start justify-between gap-4">
+                        <span className="text-slate-500">Транзакция</span>
+                        <span className="text-right font-semibold text-neutral-900">
+                          {order.transactionId}
                         </span>
                       </div>
                     )}
@@ -440,7 +479,6 @@ export default function ProfileOrderDetailsPage() {
                 </div>
               </div>
 
-              {/* ТОВАРЫ */}
               <div className="mt-8 space-y-4">
                 {order.items.map((item) => {
                   const reviewInfo = reviewPermissions[item.product.id]

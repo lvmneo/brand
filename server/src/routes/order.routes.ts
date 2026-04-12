@@ -4,6 +4,13 @@ import { authMiddleware, AuthRequest } from '../middleware/auth'
 
 const router = Router()
 
+function detectCardBrand(cardNumber: string) {
+  if (cardNumber.startsWith('4')) return 'Visa'
+  if (/^5[1-5]/.test(cardNumber)) return 'Mastercard'
+  if (/^220[0-4]/.test(cardNumber) || cardNumber.startsWith('2')) return 'Мир'
+  return 'Банковская карта'
+}
+
 router.get('/my', authMiddleware, async (req: AuthRequest, res) => {
   try {
     const userId = req.user?.userId
@@ -44,6 +51,7 @@ router.get('/my', authMiddleware, async (req: AuthRequest, res) => {
 router.post('/', authMiddleware, async (req: AuthRequest, res) => {
   try {
     const userId = req.user?.userId
+
     const {
       items,
       recipientName,
@@ -54,6 +62,11 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
       deliveryMethod,
       paymentMethod,
       cardNumber,
+      cardHolder,
+      expiry,
+      cvv,
+      sbpBank,
+      paymentConfirmed,
     } = req.body as {
       items?: { productId: string; quantity: number }[]
       recipientName?: string
@@ -64,6 +77,11 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
       deliveryMethod?: 'COURIER' | 'PICKUP'
       paymentMethod?: 'CARD' | 'SBP' | 'CASH'
       cardNumber?: string
+      cardHolder?: string
+      expiry?: string
+      cvv?: string
+      sbpBank?: string
+      paymentConfirmed?: boolean
     }
 
     if (!userId) {
@@ -74,8 +92,8 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
       return res.status(400).json({ message: 'Корзина пуста' })
     }
 
-    if (!recipientName || !phone || !city) {
-      return res.status(400).json({ message: 'Заполни данные получателя' })
+    if (!recipientName?.trim() || !phone?.trim() || !city?.trim()) {
+      return res.status(400).json({ message: 'Заполни имя, телефон и город' })
     }
 
     if (!deliveryMethod || !['COURIER', 'PICKUP'].includes(deliveryMethod)) {
@@ -93,8 +111,34 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
     if (paymentMethod === 'CARD') {
       const digitsOnly = String(cardNumber || '').replace(/\D/g, '')
 
-      if (digitsOnly.length < 16) {
-        return res.status(400).json({ message: 'Укажи корректный номер карты' })
+      if (digitsOnly.length !== 16) {
+        return res.status(400).json({ message: 'Номер карты должен содержать 16 цифр' })
+      }
+
+      if (!cardHolder?.trim()) {
+        return res.status(400).json({ message: 'Укажи имя держателя карты' })
+      }
+
+      if (!expiry?.trim() || !/^\d{2}\/\d{2}$/.test(expiry.trim())) {
+        return res.status(400).json({ message: 'Укажи срок действия карты в формате MM/YY' })
+      }
+
+      if (!cvv?.trim() || !/^\d{3}$/.test(cvv.trim())) {
+        return res.status(400).json({ message: 'CVV должен содержать 3 цифры' })
+      }
+
+      if (!paymentConfirmed) {
+        return res.status(400).json({ message: 'Подтверди demo-оплату картой' })
+      }
+    }
+
+    if (paymentMethod === 'SBP') {
+      if (!sbpBank?.trim()) {
+        return res.status(400).json({ message: 'Выбери банк для СБП' })
+      }
+
+      if (!paymentConfirmed) {
+        return res.status(400).json({ message: 'Подтверди demo-оплату по СБП' })
       }
     }
 
@@ -156,10 +200,17 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
     const deliveryPrice = deliveryMethod === 'COURIER' ? 299 : 0
     const totalAmount = productsTotal + deliveryPrice
 
+    const sanitizedCardNumber = String(cardNumber || '').replace(/\D/g, '')
     const cardLast4 =
-      paymentMethod === 'CARD'
-        ? String(cardNumber).replace(/\D/g, '').slice(-4)
-        : null
+      paymentMethod === 'CARD' ? sanitizedCardNumber.slice(-4) : null
+
+    const cardBrand =
+      paymentMethod === 'CARD' ? detectCardBrand(sanitizedCardNumber) : null
+
+    const transactionId = `PAY-${Date.now()}-${Math.floor(Math.random() * 10000)}`
+
+    const paymentStatus =
+      paymentMethod === 'CASH' ? 'PENDING' : paymentConfirmed ? 'PAID' : 'FAILED'
 
     const createdOrder = await prisma.$transaction(async (tx) => {
       for (const item of normalizedItems) {
@@ -185,7 +236,10 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
           comment: comment?.trim() || null,
           deliveryMethod,
           paymentMethod,
+          paymentStatus,
           cardLast4,
+          cardBrand,
+          transactionId,
           items: {
             create: normalizedItems,
           },

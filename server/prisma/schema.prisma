@@ -77,7 +77,10 @@ model Order {
 
   deliveryMethod  DeliveryMethod?
   paymentMethod   PaymentMethod?
+  paymentStatus   PaymentStatus  @default(PENDING)
   cardLast4       String?
+  cardBrand       String?
+  transactionId   String?
 
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -103,6 +106,12 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
 }
 
 enum DeliveryMethod {
