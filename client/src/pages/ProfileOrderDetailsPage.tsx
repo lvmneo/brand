@@ -26,6 +26,15 @@ type Order = {
   id: string
   status: string
   totalAmount: number
+  deliveryPrice: number
+  recipientName: string
+  phone: string
+  city: string
+  address: string
+  comment?: string | null
+  deliveryMethod: 'COURIER' | 'PICKUP'
+  paymentMethod: 'CARD' | 'SBP' | 'CASH'
+  cardLast4?: string | null
   createdAt: string
   items: OrderItem[]
 }
@@ -57,6 +66,16 @@ const statusSteps = ['PENDING', 'PAID', 'SHIPPED', 'DELIVERED']
 
 function getCurrentStepIndex(status: string) {
   return statusSteps.indexOf(status)
+}
+
+function getDeliveryLabel(deliveryMethod: 'COURIER' | 'PICKUP') {
+  return deliveryMethod === 'COURIER' ? 'Курьер' : 'Самовывоз'
+}
+
+function getPaymentLabel(paymentMethod: 'CARD' | 'SBP' | 'CASH') {
+  if (paymentMethod === 'CARD') return 'Карта онлайн'
+  if (paymentMethod === 'SBP') return 'СБП'
+  return 'При получении'
 }
 
 export default function ProfileOrderDetailsPage() {
@@ -276,6 +295,7 @@ export default function ProfileOrderDetailsPage() {
                 </div>
               </div>
 
+              {/* ТРЕКЕР СТАТУСА */}
               <div className="mt-8 rounded-3xl bg-[#f8fbff] p-5">
                 <div className="mb-4 text-lg font-semibold text-neutral-900">
                   Статус заказа
@@ -327,6 +347,100 @@ export default function ProfileOrderDetailsPage() {
                 )}
               </div>
 
+              {/* ИНФОРМАЦИЯ О ДОСТАВКЕ И ОПЛАТЕ */}
+              <div className="mt-8 grid gap-4 md:grid-cols-2">
+                <div className="rounded-3xl border border-[#d7e3f8] bg-white p-5 shadow-sm">
+                  <h2 className="text-xl font-bold text-neutral-900">
+                    Получатель и доставка
+                  </h2>
+
+                  <div className="mt-5 space-y-3 text-sm">
+                    <div className="flex items-start justify-between gap-4">
+                      <span className="text-slate-500">Получатель</span>
+                      <span className="text-right font-semibold text-neutral-900">
+                        {order.recipientName}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-4">
+                      <span className="text-slate-500">Телефон</span>
+                      <span className="text-right font-semibold text-neutral-900">
+                        {order.phone}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-4">
+                      <span className="text-slate-500">Город</span>
+                      <span className="text-right font-semibold text-neutral-900">
+                        {order.city}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-4">
+                      <span className="text-slate-500">Доставка</span>
+                      <span className="text-right font-semibold text-neutral-900">
+                        {getDeliveryLabel(order.deliveryMethod)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-4">
+                      <span className="text-slate-500">Адрес</span>
+                      <span className="text-right font-semibold text-neutral-900">
+                        {order.address}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-4">
+                      <span className="text-slate-500">Стоимость доставки</span>
+                      <span className="text-right font-semibold text-neutral-900">
+                        {order.deliveryPrice} ₽
+                      </span>
+                    </div>
+
+                    {order.comment && (
+                      <div className="rounded-2xl bg-[#f8fbff] p-4">
+                        <div className="text-sm text-slate-500">Комментарий</div>
+                        <div className="mt-2 text-sm font-medium text-neutral-900">
+                          {order.comment}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-[#d7e3f8] bg-white p-5 shadow-sm">
+                  <h2 className="text-xl font-bold text-neutral-900">
+                    Оплата
+                  </h2>
+
+                  <div className="mt-5 space-y-3 text-sm">
+                    <div className="flex items-start justify-between gap-4">
+                      <span className="text-slate-500">Способ оплаты</span>
+                      <span className="text-right font-semibold text-neutral-900">
+                        {getPaymentLabel(order.paymentMethod)}
+                      </span>
+                    </div>
+
+                    {order.paymentMethod === 'CARD' && order.cardLast4 && (
+                      <div className="flex items-start justify-between gap-4">
+                        <span className="text-slate-500">Карта</span>
+                        <span className="text-right font-semibold text-neutral-900">
+                          **** **** **** {order.cardLast4}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="rounded-2xl bg-[#f8fbff] p-4">
+                      <div className="text-sm text-slate-500">Итого к оплате</div>
+                      <div className="mt-2 text-2xl font-bold text-neutral-900">
+                        {order.totalAmount} ₽
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ТОВАРЫ */}
               <div className="mt-8 space-y-4">
                 {order.items.map((item) => {
                   const reviewInfo = reviewPermissions[item.product.id]

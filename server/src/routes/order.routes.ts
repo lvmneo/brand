@@ -44,8 +44,26 @@ router.get('/my', authMiddleware, async (req: AuthRequest, res) => {
 router.post('/', authMiddleware, async (req: AuthRequest, res) => {
   try {
     const userId = req.user?.userId
-    const { items } = req.body as {
+    const {
+      items,
+      recipientName,
+      phone,
+      city,
+      address,
+      comment,
+      deliveryMethod,
+      paymentMethod,
+      cardNumber,
+    } = req.body as {
       items?: { productId: string; quantity: number }[]
+      recipientName?: string
+      phone?: string
+      city?: string
+      address?: string
+      comment?: string
+      deliveryMethod?: 'COURIER' | 'PICKUP'
+      paymentMethod?: 'CARD' | 'SBP' | 'CASH'
+      cardNumber?: string
     }
 
     if (!userId) {
@@ -54,6 +72,30 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: 'Корзина пуста' })
+    }
+
+    if (!recipientName || !phone || !city) {
+      return res.status(400).json({ message: 'Заполни данные получателя' })
+    }
+
+    if (!deliveryMethod || !['COURIER', 'PICKUP'].includes(deliveryMethod)) {
+      return res.status(400).json({ message: 'Выбери способ доставки' })
+    }
+
+    if (!paymentMethod || !['CARD', 'SBP', 'CASH'].includes(paymentMethod)) {
+      return res.status(400).json({ message: 'Выбери способ оплаты' })
+    }
+
+    if (deliveryMethod === 'COURIER' && !address?.trim()) {
+      return res.status(400).json({ message: 'Укажи адрес доставки' })
+    }
+
+    if (paymentMethod === 'CARD') {
+      const digitsOnly = String(cardNumber || '').replace(/\D/g, '')
+
+      if (digitsOnly.length < 16) {
+        return res.status(400).json({ message: 'Укажи корректный номер карты' })
+      }
     }
 
     const invalidItem = items.find(
@@ -106,10 +148,18 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
       }
     })
 
-    const totalAmount = normalizedItems.reduce(
+    const productsTotal = normalizedItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
     )
+
+    const deliveryPrice = deliveryMethod === 'COURIER' ? 299 : 0
+    const totalAmount = productsTotal + deliveryPrice
+
+    const cardLast4 =
+      paymentMethod === 'CARD'
+        ? String(cardNumber).replace(/\D/g, '').slice(-4)
+        : null
 
     const createdOrder = await prisma.$transaction(async (tx) => {
       for (const item of normalizedItems) {
@@ -127,6 +177,15 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
         data: {
           userId,
           totalAmount,
+          deliveryPrice,
+          recipientName: recipientName.trim(),
+          phone: phone.trim(),
+          city: city.trim(),
+          address: deliveryMethod === 'PICKUP' ? 'Самовывоз' : String(address).trim(),
+          comment: comment?.trim() || null,
+          deliveryMethod,
+          paymentMethod,
+          cardLast4,
           items: {
             create: normalizedItems,
           },
