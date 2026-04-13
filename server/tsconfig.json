@@ -2,11 +2,11 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "Node16",
-    "rootDir": ".",
+    "rootDir": "./src",
     "outDir": "./dist",
     "esModuleInterop": true,
     "strict": true,
-   "moduleResolution": "node16",
+    "moduleResolution": "node16",
     "skipLibCheck": true,
     "types": ["node"]
   },
