@@ -4,33 +4,42 @@ import { authMiddleware } from '../middleware/auth'
 import { adminMiddleware } from '../middleware/admin'
 import { AuthRequest } from '../middleware/auth'
 import multer from 'multer'
-import path from 'path'
-import fs from 'fs'
+import { v2 as cloudinary } from 'cloudinary'
+import { CloudinaryStorage } from 'multer-storage-cloudinary'
 
 const router = Router()
 
-const uploadsDir = path.join(process.cwd(), 'uploads')
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+})
 
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true })
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadsDir)
-  },
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname)
-    const baseName = path
-      .basename(file.originalname, ext)
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (_req, file) => {
+    const originalName = file.originalname
+      .split('.')[0]
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
 
-    cb(null, `${Date.now()}-${baseName}${ext}`)
+    return {
+      folder: 'brand-marketplace/products',
+      public_id: `${Date.now()}-${originalName || 'image'}`,
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+      resource_type: 'image',
+    }
   },
 })
 
-const upload = multer({ storage })
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+})
+
+
 
 router.use(authMiddleware, adminMiddleware)
 
@@ -212,13 +221,26 @@ router.post('/upload-image', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'Файл не загружен' })
     }
 
-    const serverUrl = process.env.SERVER_URL || 'http://localhost:4000'
-    const imageUrl = `${serverUrl}/uploads/${req.file.filename}`
+    const file = req.file as Express.Multer.File & {
+      path?: string
+      secure_url?: string
+    }
 
-    res.json({ imageUrl })
+    const imageUrl = file.path || file.secure_url
+
+    if (!imageUrl) {
+      return res.status(500).json({
+        message: 'Не удалось получить ссылку на изображение',
+      })
+    }
+
+    return res.json({ imageUrl })
   } catch (error) {
     console.error(error)
-    res.status(500).json({ message: 'Ошибка загрузки изображения' })
+
+    return res.status(500).json({
+      message: 'Ошибка загрузки изображения',
+    })
   }
 })
 
